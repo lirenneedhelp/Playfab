@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class LevelSystem : MonoBehaviour
 {
+    public static LevelSystem Instance = null;
     public int level;
     public float maxLevel;
     public float currentXp;
@@ -15,7 +16,7 @@ public class LevelSystem : MonoBehaviour
     public float powerMultiplier = 20f;
     [Range(7f, 14f)]
     public float divisionMultiplier = 7f;
-    public GameObject levelUpEffect;
+    //public GameObject levelUpEffect;
 
     [Header("UI")]
     public Image frontXpBar;
@@ -25,13 +26,21 @@ public class LevelSystem : MonoBehaviour
     // Timers
     private float delayTimer;
 
-    void Start()
+    void Awake()
     {
-        levelText.text = "Level " + level + ":";
-        level = 1;
-        xpText.text = Mathf.Round(currentXp) + "/" + Mathf.Round(nextLevelXp);
-        frontXpBar.fillAmount = currentXp / nextLevelXp;
-        nextLevelXp = CalculateNextLevelXp();
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(this);
+
+            levelText.text = "Level " + level + ":";
+            level = 1;
+            xpText.text = Mathf.Round(currentXp) + "/" + Mathf.Round(nextLevelXp);
+            frontXpBar.fillAmount = currentXp / nextLevelXp;
+            nextLevelXp = CalculateNextLevelXp();
+        }
+        else
+            Destroy(gameObject);
     }
 
     void Update()
@@ -63,6 +72,7 @@ public class LevelSystem : MonoBehaviour
             frontXpBar.fillAmount = Mathf.Lerp(fXP, xpFraction, delayTimer / 5f);
         }
 
+        levelText.text = "Level " + level + ":";
         xpText.text = Mathf.Round(currentXp) + "/" + nextLevelXp;
     }
 
@@ -96,7 +106,7 @@ public class LevelSystem : MonoBehaviour
         level = Mathf.Clamp(level, 0, 50);
 
         xpText.text = Mathf.Round(currentXp) + "/" + nextLevelXp;
-        levelText.text = "Level " + level;
+        levelText.text = "Level " + level + ":";
         //Instantiate(levelUpEffect, transform.position, Quaternion.identity);
     }
 

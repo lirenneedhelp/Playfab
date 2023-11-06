@@ -4,15 +4,45 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
+using Photon.Pun;
 
 
 public class PlayFabUserMgt : MonoBehaviour
 {
+    public static PlayFabUserMgt Instance;
     [SerializeField]InputField userEmailOrUsername,userPassword, userEmail;
     [SerializeField]Text Msg;
     [SerializeField]GameObject PanelLogin, PanelRegister, PanelForgotPassword;
-    
 
+    [SerializeField] Toggle rememberMeToggle;
+
+    private const string PlayerPrefsUsernameKey = "Username";
+    private const string PlayerPrefsPasswordKey = "Password";
+
+    void Start()
+    {
+        // Load saved credentials if "Remember Me" was checked previously
+        if (PlayerPrefs.HasKey(PlayerPrefsUsernameKey) && PlayerPrefs.HasKey(PlayerPrefsPasswordKey))
+        {
+            string savedUsername = PlayerPrefs.GetString(PlayerPrefsUsernameKey);
+            string savedPassword = PlayerPrefs.GetString(PlayerPrefsPasswordKey);
+
+            userEmailOrUsername.text = savedUsername;
+            userPassword.text = savedPassword;
+            rememberMeToggle.isOn = true;
+        }
+    }
+    void OnError(PlayFabError e)
+    {
+        //Debug.Log("Error"+e.GenerateErrorReport());
+        UpdateMsg("Error"+e.GenerateErrorReport());
+    }
+    void UpdateMsg(string msg)
+    { 
+        //to display in console and messagebox
+        Debug.Log(msg);
+        Msg.text=msg;
+    }
     // Checks whether an email / username has been entered
     public void CheckString()
     {
@@ -32,16 +62,7 @@ public class PlayFabUserMgt : MonoBehaviour
         // Check if the input matches the email pattern 
         bool isEmail = Regex.IsMatch(input, emailPattern);
 
-        // Return true if input is a valid email or username, otherwise false
         return isEmail;
-    }
-    void OnError(PlayFabError e){
-        //Debug.Log("Error"+e.GenerateErrorReport());
-        UpdateMsg("Error"+e.GenerateErrorReport());
-    }
-    void UpdateMsg(string msg){ //to display in console and messagebox
-        Debug.Log(msg);
-        Msg.text=msg;
     }
     public void LoginWithEmail(){
         var loginRequest=new LoginWithEmailAddressRequest{
@@ -60,10 +81,25 @@ public class PlayFabUserMgt : MonoBehaviour
     }
     void OnLoginSuccess(LoginResult r){
        UpdateMsg("Login Success!");
+
+       if (rememberMeToggle.isOn)
+       {
+            PlayerPrefs.SetString(PlayerPrefsUsernameKey, userEmailOrUsername.text);
+            PlayerPrefs.SetString(PlayerPrefsPasswordKey, userPassword.text);
+       }
+       else
+       {
+            // If "Remember Me" is not checked, clear saved credentials from PlayerPrefs
+            PlayerPrefs.DeleteKey(PlayerPrefsUsernameKey);
+            PlayerPrefs.DeleteKey(PlayerPrefsPasswordKey);
+       }
+       DataCarrier.Instance.playfabID = r.PlayFabId;
        SceneManager.LoadScene(1);
     }
     public void OnButtonLogout(){
         PlayFabClientAPI.ForgetAllCredentials();
+        PhotonNetwork.Disconnect();
+        Destroy(LevelSystem.Instance.gameObject);
         Debug.Log("logged out");
         SceneManager.LoadScene("LoginScn");
 
