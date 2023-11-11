@@ -9,6 +9,8 @@ public class LevelSystem : MonoBehaviour
     public float maxLevel;
     public float currentXp;
     public int nextLevelXp = 100;
+    private int skillPoints = 0;
+
     [Header("Multipliers")]
     [Range(1f, 300f)]
     public float additionMultiplier;
@@ -51,6 +53,8 @@ public class LevelSystem : MonoBehaviour
             if (currentXp >= nextLevelXp)
             {
                 LevelUp();
+                if (!DataCarrier.Instance.isGuest)
+                    PFDataMgr.SetUserData((int)currentXp, nextLevelXp, level);
             }        
         }
         else

@@ -4,6 +4,48 @@ using PlayFab;
 using PlayFab.ClientModels;
 using TMPro;
 
+[System.Serializable]
+public struct JSListWrapper<T>
+{
+    public List<T> list;
+    public JSListWrapper(List<T> list) => this.list = list;
+}
+
+[System.Serializable]
+public struct PlayerData
+{
+    int level;
+    int maxLevel;
+    float currentEXP;
+    int nextLevelEXP;
+    int totalSkillPoints;
+
+    public PlayerData(int _level, int _maxLevel, float _currentEXP, int _nextLevelEXP, int _totalSkillPoints)
+    {
+        level = _level;
+        maxLevel = _maxLevel;
+        currentEXP = _currentEXP;
+        nextLevelEXP = _nextLevelEXP;
+        totalSkillPoints = _totalSkillPoints;
+    }
+}
+
+[System.Serializable]
+public struct Skill
+{
+    public string name;
+    public int level;
+    public bool isUnlocked;
+
+    public Skill(string _name, int _level, bool unlocked)
+    {
+        name = _name;
+        level = _level;
+        isUnlocked = unlocked;
+    }
+
+};
+
 public class PFDataMgr : MonoBehaviour
 {
     //[SerializeField] TMP_Text XPDisplay;
