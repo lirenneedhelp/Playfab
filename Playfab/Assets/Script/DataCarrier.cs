@@ -6,6 +6,7 @@ public class DataCarrier : MonoBehaviour
 {
     public static DataCarrier Instance = null;
     public string playfabID;
+    public bool isGuest;
     
     // Start is called before the first frame update
     void Awake()
@@ -14,6 +15,10 @@ public class DataCarrier : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(this);
+        }
+        else
+        {
+            Destroy(gameObject);
         }
     }
 

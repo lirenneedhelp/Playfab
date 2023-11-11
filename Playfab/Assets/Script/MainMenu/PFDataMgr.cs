@@ -14,7 +14,7 @@ public class PFDataMgr : MonoBehaviour
     {
         GetPlayerProfile(DataCarrier.Instance.playfabID);
         GetUserData();
-        
+        CheckIfCustomID();
     }
 
 
@@ -83,7 +83,31 @@ public class PFDataMgr : MonoBehaviour
     },
     result => displayNameText.text = result.PlayerProfile.DisplayName,
     error => Debug.LogError(error.GenerateErrorReport()));
-}
+
+    
+    }
+
+    private void CheckIfCustomID()
+    {
+        var request = new GetAccountInfoRequest
+        {
+            PlayFabId = DataCarrier.Instance.playfabID
+        };
+
+        PlayFabClientAPI.GetAccountInfo(request, OnGetAccountInfoSuccess, 
+        error=>{
+            Debug.LogError("Failed to get account info: " + error.GenerateErrorReport());
+        });
+    }
+
+    private void OnGetAccountInfoSuccess(GetAccountInfoResult result)
+    {
+        // Check if the user has a custom ID
+        if (result.AccountInfo.CustomIdInfo.CustomId == null)
+            DataCarrier.Instance.isGuest = false;
+        else
+            DataCarrier.Instance.isGuest = true;
+    }
 
     #endregion
 

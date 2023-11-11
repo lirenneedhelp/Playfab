@@ -107,7 +107,8 @@ public class GameController : MonoBehaviour
 
     public void GoToLanding()
     {
-        PFDataMgr.SetUserData((int)LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.level);
+        if (!DataCarrier.Instance.isGuest)
+            PFDataMgr.SetUserData((int)LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.level);
         SceneManager.LoadScene("Landing");
     }
 
@@ -119,8 +120,11 @@ public class GameController : MonoBehaviour
 
         finalScoreText.text = score.ToString();
         finalHighScoreText.text = highestScore.ToString();
+
         LevelSystem.Instance.GainExperienceFlatRate(score * 0.5f);
-        PFDataMgr.AddPlayerScore(int.Parse(finalScoreText.text));
+
+        if (!DataCarrier.Instance.isGuest)
+            PFDataMgr.AddPlayerScore(int.Parse(finalScoreText.text));
 
     }
 

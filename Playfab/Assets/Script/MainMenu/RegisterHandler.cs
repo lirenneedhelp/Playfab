@@ -13,9 +13,17 @@ public class RegisterHandler : MonoBehaviour
     public void ValidatePassword()
     {
         if (userPassword.text == userConfirmPassword.text)
+        {
             RegisterUser();
+        }
         else
-            Debug.Log("The Passwords do not match!");
+        {
+            string msg = "The Passwords do not match!";
+            UpdateMsg(msg);
+            //Debug.Log(msg);
+        }
+
+        ClearRegisterFields();
     }
     public void RegisterUser(){ //for button click
         var registerRequest=new RegisterPlayFabUserRequest
@@ -51,5 +59,12 @@ public class RegisterHandler : MonoBehaviour
     void OnDisplayNameUpdate(UpdateUserTitleDisplayNameResult r)
     {
         Debug.Log("display name updated!" + r.DisplayName);
+    }
+    void ClearRegisterFields()
+    {
+        userEmail.text = "";
+        userName.text = "";
+        userPassword.text = "";
+        userConfirmPassword.text = "";
     }
 }
