@@ -20,10 +20,10 @@ public class RegisterHandler : MonoBehaviour
         {
             string msg = "The Passwords do not match!";
             UpdateMsg(msg);
+            ClearRegisterFields();
             //Debug.Log(msg);
         }
 
-        ClearRegisterFields();
     }
     public void RegisterUser(){ //for button click
         var registerRequest=new RegisterPlayFabUserRequest
@@ -44,6 +44,7 @@ public class RegisterHandler : MonoBehaviour
         };
         // update to profile
         PlayFabClientAPI.UpdateUserTitleDisplayName(req, OnDisplayNameUpdate, OnError);
+        ClearRegisterFields();
         //UpdateMsg("Registration success!");
 
     }

@@ -137,6 +137,7 @@ public class PlayFabUserMgt : MonoBehaviour
             PlayerPrefs.DeleteKey(PlayerPrefsPasswordKey);
        }
        DataCarrier.Instance.playfabID = r.PlayFabId;
+       DataCarrier.Instance.sessionTicket = r.SessionTicket;
        SceneManager.LoadScene(1);
     }
 

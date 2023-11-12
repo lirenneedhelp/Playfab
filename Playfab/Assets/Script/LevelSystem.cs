@@ -111,6 +111,7 @@ public class LevelSystem : MonoBehaviour
 
         xpText.text = Mathf.Round(currentXp) + "/" + nextLevelXp;
         levelText.text = "Level " + level + ":";
+        skillPoints++;
         //Instantiate(levelUpEffect, transform.position, Quaternion.identity);
     }
 
