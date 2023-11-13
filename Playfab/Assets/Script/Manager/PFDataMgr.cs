@@ -51,6 +51,8 @@ public class PFDataMgr : MonoBehaviour
     //[SerializeField] TMP_Text XPDisplay;
     [SerializeField] TMP_Text displayNameText;
 
+    [SerializeField] GameObject skillsManager;
+
 
     void Awake()
     {
@@ -129,6 +131,7 @@ public class PFDataMgr : MonoBehaviour
                 LevelSystem.Instance.currentXp = jlw.list[0].currentEXP;
                 LevelSystem.Instance.nextLevelXp = jlw.list[0].nextLevelEXP;
                 LevelSystem.Instance.skillPoints = jlw.list[0].totalSkillPoints;
+
 
             }
             else

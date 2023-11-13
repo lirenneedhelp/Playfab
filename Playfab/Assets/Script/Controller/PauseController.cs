@@ -6,6 +6,9 @@ public class PauseController : MonoBehaviour
 {
     public GameObject panel;
     public GameObject confirmationPanel;
+    public GameObject SkillPanel;
+
+    public SkillsManager sM;
 
     // Start is called before the first frame update
     void Start()
@@ -39,5 +42,17 @@ public class PauseController : MonoBehaviour
     {
         panel.SetActive(true);
         confirmationPanel.SetActive(false);   
+    }
+    public void OpenSkillsPanel()
+    {
+        SkillPanel.SetActive(true);
+        panel.SetActive(false);
+        sM.UpdateSPDisplay();
+    }
+    public void CloseSkillsPanel()
+    {
+        SkillPanel.SetActive(false);
+        panel.SetActive(false);
+        Time.timeScale = 1;
     }
 }

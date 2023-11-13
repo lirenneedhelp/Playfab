@@ -9,7 +9,7 @@ public class LevelSystem : MonoBehaviour
     public float maxLevel;
     public float currentXp;
     public int nextLevelXp = 100;
-    public int skillPoints = 0;
+    public int skillPoints;
 
     [Header("Multipliers")]
     [Range(1f, 300f)]
@@ -36,6 +36,7 @@ public class LevelSystem : MonoBehaviour
             DontDestroyOnLoad(this);
 
             PFDataMgr.LoadJSON();
+
             levelText.text = "Level " + level + ":";
             level = 1;
             xpText.text = Mathf.Round(currentXp) + "/" + Mathf.Round(nextLevelXp);

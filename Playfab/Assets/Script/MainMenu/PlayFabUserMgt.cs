@@ -148,6 +148,7 @@ public class PlayFabUserMgt : MonoBehaviour
         //PhotonNetwork.Disconnect();
         Destroy(LevelSystem.Instance.gameObject);
         Debug.Log("logged out");
+        Time.timeScale = 1;
         SceneManager.LoadScene("LoginScn");
 
     }
