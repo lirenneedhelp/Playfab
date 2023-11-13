@@ -7,6 +7,7 @@ public class DataCarrier : MonoBehaviour
     public static DataCarrier Instance = null;
     public string playfabID;
     public string sessionTicket;
+    public string displayName;
     public bool isGuest;
     
     // Start is called before the first frame update

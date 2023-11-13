@@ -107,6 +107,11 @@ public class GameController : MonoBehaviour
 
     public void GoToLanding()
     {
+        if (!DataCarrier.Instance.isGuest)
+        {
+            PFDataMgr.SetUserData((int)LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.level);
+            PFDataMgr.UpdateDataJSON(LevelSystem.Instance.level, (int)LevelSystem.Instance.maxLevel, LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.skillPoints);
+        }
         SceneManager.LoadScene("Landing");
     }
 

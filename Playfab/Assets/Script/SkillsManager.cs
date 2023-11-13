@@ -66,4 +66,5 @@ public class SkillsManager : MonoBehaviour
             new Skill("Dash", 0, false)
         };
     }
+
 }

@@ -96,7 +96,7 @@ public class PlayFabUserMgt : MonoBehaviour
         var guestReq = new LoginWithCustomIDRequest
         {
                 CustomId=SystemInfo.deviceUniqueIdentifier,CreateAccount=true,
-                InfoRequestParameters=new GetPlayerCombinedInfoRequestParams
+                InfoRequestParameters=new PlayFab.ClientModels.GetPlayerCombinedInfoRequestParams
                 {
                     GetPlayerProfile=true
                 }
@@ -144,7 +144,8 @@ public class PlayFabUserMgt : MonoBehaviour
 
     public void OnButtonLogout(){
         PlayFabClientAPI.ForgetAllCredentials();
-        PhotonNetwork.Disconnect();
+        //PhotonNetwork.LeaveRoom();
+        //PhotonNetwork.Disconnect();
         Destroy(LevelSystem.Instance.gameObject);
         Debug.Log("logged out");
         SceneManager.LoadScene("LoginScn");
@@ -159,6 +160,7 @@ public class PlayFabUserMgt : MonoBehaviour
 
     
     }
+
     void OnPasswordReset(SendAccountRecoveryEmailResult r){
         Msg.text="Password reset email sent.";
         userEmail.text = "";

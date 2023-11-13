@@ -105,6 +105,7 @@ public class Player : MonoBehaviourPunCallbacks
                     animator.SetTrigger("Is_Dancing");
                 }
 
+
                 //Update the animation
                 UpdateAnimationUpdate();
             }
