@@ -11,6 +11,28 @@ public class InventoryManager : MonoBehaviour
 
     List<CatalogItem> items;
 
+    [SerializeField] private RectTransform _content;
+
+    public GameObject itemShopPrefab;
+
+
+    struct ItemData
+    {
+        public string itemName;
+        public string itemID;
+        public string virtualCurrency;
+        public int price;
+
+        public ItemData(string name, string itemId, string currency, int itemPrice)
+        {
+            itemName = name;
+            itemID = itemId;
+            virtualCurrency = currency;
+            price = itemPrice;
+        }
+
+    }
+
     void Start()
     {
         GetVirtualCurrencies();
@@ -52,10 +74,17 @@ public class InventoryManager : MonoBehaviour
             
             UpdateMsg("Catalog Items");
             items = result.Catalog;
+            List<ItemData> itemList = new();
+
             foreach(CatalogItem i in items)
             {
-                UpdateMsg(i.DisplayName + "," + i.VirtualCurrencyPrices["CC"]);
+                ItemData iData = new ItemData(i.DisplayName, i.ItemId, "CC", (int)i.VirtualCurrencyPrices["CC"]);
+                itemList.Add(iData);
+                //UpdateMsg(i.DisplayName + "," + i.VirtualCurrencyPrices["CC"]);
             }
+
+            PopulateShop(itemList);
+
         }, OnError);
     }
     public void BuyItem(int index)
@@ -84,5 +113,25 @@ public class InventoryManager : MonoBehaviour
                 UpdateMsg(i.DisplayName + "," + i.ItemId + "," + i.ItemInstanceId);
             }
         }, OnError);
+    }
+    void PopulateShop(List<ItemData> Items)
+    {
+        // Clear existing leaderboard items
+        foreach (Transform child in _content.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // Create leaderboard items based on the fetched scores
+        for (int i = 0; i < Items.Count; i++)
+        {
+            GameObject shopItem = Instantiate(itemShopPrefab, _content);
+            TMP_Text itemText = shopItem.transform.Find("ItemName").GetComponent<TMP_Text>();
+            TMP_Text costText = shopItem.transform.Find("CostText").GetComponent<TMP_Text>();
+
+            itemText.text = Items[i].itemName;
+            costText.text = Items[i].price.ToString();
+
+        }
     }
 }
