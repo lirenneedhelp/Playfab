@@ -5,6 +5,7 @@ using PlayFab.ClientModels;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 public class InventoryManager : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI Msg, coinsText;
@@ -14,6 +15,8 @@ public class InventoryManager : MonoBehaviour
     [SerializeField] private RectTransform _content;
 
     public GameObject itemShopPrefab;
+
+    public Sprite[] itemArray;
 
 
     struct ItemData
@@ -67,7 +70,7 @@ public class InventoryManager : MonoBehaviour
     public void GetCatalog()
     {
         var catreq = new GetCatalogItemsRequest(){
-            CatalogVersion = "FoodCatalog"
+            CatalogVersion = "ShopCatalog"
         };
         PlayFabClientAPI.GetCatalogItems(catreq, 
         result =>{
@@ -128,9 +131,12 @@ public class InventoryManager : MonoBehaviour
             GameObject shopItem = Instantiate(itemShopPrefab, _content);
             TMP_Text itemText = shopItem.transform.Find("ItemName").GetComponent<TMP_Text>();
             TMP_Text costText = shopItem.transform.Find("CostText").GetComponent<TMP_Text>();
+            Image itemImage = shopItem.transform.Find("ItemImage").GetComponent<Image>();
 
             itemText.text = Items[i].itemName;
             costText.text = Items[i].price.ToString();
+            itemImage.sprite = itemArray[i];
+            
 
         }
     }

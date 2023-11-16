@@ -4940,6 +4940,9 @@ MonoBehaviour:
   coinsText: {fileID: 1069318454}
   _content: {fileID: 1306593395}
   itemShopPrefab: {fileID: 9017170324435717656, guid: 8f32c11229a60084d8b45b0a9bdd372b, type: 3}
+  itemArray:
+  - {fileID: 21300000, guid: 759d58d0c772d3f4886403af2185cb3f, type: 3}
+  - {fileID: 21300000, guid: 5bbd68ae563e0fa4ca98d44404b0d653, type: 3}
 --- !u!4 &748100965
 Transform:
   m_ObjectHideFlags: 0
