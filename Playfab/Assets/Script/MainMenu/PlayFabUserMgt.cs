@@ -4,13 +4,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
-using Photon.Pun;
+using TMPro;
 
 public class PlayFabUserMgt : MonoBehaviour
 {
     public static PlayFabUserMgt Instance = null;
-    [SerializeField]InputField userEmailOrUsername,userPassword, userEmail;
-    [SerializeField]Text Msg;
+    [SerializeField]TMP_InputField userEmailOrUsername,userPassword;
+    [SerializeField]InputField userEmail;
+    [SerializeField]TMP_Text Msg, forgotMsg;
     [SerializeField]GameObject PanelLogin, PanelRegister, PanelForgotPassword;
 
     [SerializeField] Toggle rememberMeToggle, hidePassword;
@@ -19,6 +20,11 @@ public class PlayFabUserMgt : MonoBehaviour
 
     private const string PlayerPrefsUsernameKey = "Username";
     private const string PlayerPrefsPasswordKey = "Password";
+
+    private int InputSelected;
+
+    public void UsernameSelected() => InputSelected = 0;
+    public void PasswordSelected() => InputSelected = 1;
 
     void Start()
     {
@@ -34,6 +40,42 @@ public class PlayFabUserMgt : MonoBehaviour
         }
         HidePassword();
     }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Tab) && Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            InputSelected--;
+            if (InputSelected < 0) InputSelected = 1;
+            SelectInputField();
+        }
+        else if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            InputSelected++;
+            if (InputSelected > 1) InputSelected = 0;
+            SelectInputField();
+        }
+
+        void SelectInputField()
+        {
+            switch (InputSelected)
+            {
+                case 0: 
+                    userEmailOrUsername.Select();
+                    break;
+                case 1:
+                    userPassword.Select();
+                    break;
+            }
+
+        }
+
+        
+        
+    }
+
+
+
     void OnError(PlayFabError e)
     {
         //Debug.Log("Error"+e.GenerateErrorReport());
@@ -75,7 +117,22 @@ public class PlayFabUserMgt : MonoBehaviour
         error =>
         {
             ClearLoginFields();
-            UpdateMsg("Error"+error.GenerateErrorReport());
+            
+            switch (error.Error)
+            {
+                case PlayFabErrorCode.InvalidParams:
+                    UpdateMsg("Invalid Email/Password");
+                    break;
+
+                case PlayFabErrorCode.AccountNotFound:
+                    UpdateMsg("Account not found. Please check your email and try again.");
+                    break;
+
+                default:
+                    UpdateMsg("An error occurred during login.");
+                    break;
+            }
+            
         });
     }
     public void LoginWithUsername()
@@ -88,7 +145,26 @@ public class PlayFabUserMgt : MonoBehaviour
         error =>
         {
             ClearLoginFields();
-            UpdateMsg("Error"+error.GenerateErrorReport());
+
+            switch (error.Error)
+            {
+                case PlayFabErrorCode.InvalidUsernameOrPassword:
+                    UpdateMsg("Invalid Username or Password");
+                    break;
+
+                case PlayFabErrorCode.InvalidParams:
+                    UpdateMsg("Fill out the fields");
+                    break;
+
+                case PlayFabErrorCode.AccountNotFound:
+                    UpdateMsg("Account not found. Please check your username and try again.");
+                    break;
+
+                default:
+                    UpdateMsg("An error occurred during login.");
+                    break;
+            }
+           
         });
     }
     public void GuestLogin()
@@ -96,7 +172,7 @@ public class PlayFabUserMgt : MonoBehaviour
         var guestReq = new LoginWithCustomIDRequest
         {
                 CustomId=SystemInfo.deviceUniqueIdentifier,CreateAccount=true,
-                InfoRequestParameters=new PlayFab.ClientModels.GetPlayerCombinedInfoRequestParams
+                InfoRequestParameters=new GetPlayerCombinedInfoRequestParams
                 {
                     GetPlayerProfile=true
                 }
@@ -163,7 +239,7 @@ public class PlayFabUserMgt : MonoBehaviour
     }
 
     void OnPasswordReset(SendAccountRecoveryEmailResult r){
-        Msg.text="Password reset email sent.";
+        forgotMsg.text="Password reset email sent.";
         userEmail.text = "";
     }
     public void OpenRegisterPanel()
@@ -204,9 +280,10 @@ public class PlayFabUserMgt : MonoBehaviour
     }
     public void HidePassword()
     {
-        userPassword.contentType = hidePassword.isOn ? InputField.ContentType.Standard : InputField.ContentType.Password;
+        userPassword.contentType = hidePassword.isOn ? TMP_InputField.ContentType.Standard : TMP_InputField.ContentType.Password;
         hidePassword.transform.Find("Background").GetComponent<Image>().sprite = hidePassword.isOn ? eyeEnabled : eyeDisabled;
         userPassword.ForceLabelUpdate();
     }
 }
+
 

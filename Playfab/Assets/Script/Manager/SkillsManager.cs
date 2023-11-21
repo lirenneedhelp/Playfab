@@ -53,6 +53,7 @@ public class SkillsManager : MonoBehaviour
             Debug.Log(r.Data["Skills"].Value);
             JSListWrapper<Skill> jlw = JsonUtility.FromJson<JSListWrapper<Skill>>(r.Data["Skills"].Value);
             skillList = jlw.list;
+            DataCarrier.Instance.skills = skillList;
             for(int i = 0; i < skillList.Count; i++)
                 UpdateDisplaySkillLevel(i, skillList[i].level);
         }
@@ -66,10 +67,11 @@ public class SkillsManager : MonoBehaviour
     {
         skillList = new()
         {
-            new Skill("Jump", 0, false),
-            new Skill ("Speed", 0, false),
+            new Skill("Jump_Boost", 0, false),
+            new Skill ("Double_Jump", 0, false),
             new Skill("Flight", 0, false)
         };
+        DataCarrier.Instance.skills = skillList;
     }
 
     public void UpgradeSkill(string name)

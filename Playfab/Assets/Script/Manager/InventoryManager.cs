@@ -18,6 +18,8 @@ public class InventoryManager : MonoBehaviour
 
     public Sprite[] itemArray;
 
+    int coins;
+
 
     struct ItemData
     {
@@ -61,9 +63,8 @@ public class InventoryManager : MonoBehaviour
     {
         PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest(),
         r=>{
-            int coins = r.VirtualCurrency["CC"];
-            coinsText.text = "Coins:" + coins;
-            UpdateMsg("Coins:" + coins);
+            coins = r.VirtualCurrency["CC"];
+            coinsText.text = coins.ToString();
         },
         OnError);
     }
@@ -75,7 +76,7 @@ public class InventoryManager : MonoBehaviour
         PlayFabClientAPI.GetCatalogItems(catreq, 
         result =>{
             
-            UpdateMsg("Catalog Items");
+            //UpdateMsg("Catalog Items");
             items = result.Catalog;
             List<ItemData> itemList = new();
 
@@ -102,7 +103,11 @@ public class InventoryManager : MonoBehaviour
         PlayFabClientAPI.PurchaseItem(buyreq,
         result => {
             UpdateMsg("Bought!");
-        },OnError);
+        },
+        error=>
+        {
+            UpdateMsg("Not Enough Coins");
+        });
     }
     public void GetPlayerInventory()
     {
@@ -110,12 +115,30 @@ public class InventoryManager : MonoBehaviour
         PlayFabClientAPI.GetUserInventory(userInv, 
         result => {
             List<ItemInstance> ii = result.Inventory;
-            UpdateMsg("Player Inventory");
+            //UpdateMsg("Player Inventory");
             foreach(ItemInstance i in ii)
             {
-                UpdateMsg(i.DisplayName + "," + i.ItemId + "," + i.ItemInstanceId);
+                //UpdateMsg(i.DisplayName + "," + i.ItemId + "," + i.ItemInstanceId);
             }
         }, OnError);
+    }
+    public void UseInventoryItem(int index)
+    {
+        var userInvReq = new ConsumeItemRequest()
+        {
+            ConsumeCount = 1,
+            ItemInstanceId = items[index].ItemId,
+            CharacterId = DataCarrier.Instance.playfabID
+        };
+
+        PlayFabClientAPI.ConsumeItem(userInvReq, r =>
+        {
+
+        }, 
+        e =>
+        {
+            Debug.Log(e.GenerateErrorReport());
+        });
     }
     void PopulateShop(List<ItemData> Items)
     {
@@ -136,8 +159,13 @@ public class InventoryManager : MonoBehaviour
             itemText.text = Items[i].itemName;
             costText.text = Items[i].price.ToString();
             itemImage.sprite = itemArray[i];
-            
+
+            shopItem.GetComponent<Button>().onClick.AddListener(() => {
+                BuyItem(i);
+            });
+
 
         }
     }
+
 }

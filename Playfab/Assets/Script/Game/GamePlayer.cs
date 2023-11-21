@@ -23,6 +23,30 @@ public class GamePlayer : MonoBehaviour
     public ParticleSystem PointParticleSystem;
     SpriteRenderer spriteRenderer;
 
+
+    float flight_duration = 0f;
+
+    float flightCD;
+
+    float flightTimer;
+
+    bool isFlight = true;
+
+    bool Flight = false;
+
+    bool doubleJump = false;
+
+    int remainingDoubleJumps = 2;
+
+    float doubleJumpCD;
+
+    float storeDJCD;
+
+    public float baseCooldown = 5.0f; // Initial cooldown time
+    public float cooldownScaleFactor = 0.9f; // Scale factor for cooldown reduction per level
+
+    bool startCD = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -33,6 +57,14 @@ public class GamePlayer : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         canJump = false;
         isJumping = false;
+        doubleJump = DataCarrier.Instance.skills[1].level > 0;
+        storeDJCD = baseCooldown * Mathf.Pow(cooldownScaleFactor, DataCarrier.Instance.skills[1].level);
+        doubleJumpCD = storeDJCD;
+
+        Flight = DataCarrier.Instance.skills[2].level > 0;
+        flightCD = 10f;
+        flightTimer = flightCD;
+        flight_duration = DataCarrier.Instance.skills[2].level;
     }
 
     // Update is called once per frame
@@ -50,13 +82,71 @@ public class GamePlayer : MonoBehaviour
 
                 //Stop the object and push it by "upForce"
                 rb2d.velocity = Vector2.zero;
-                rb2d.AddForce(upForce, ForceMode2D.Impulse);
+                rb2d.AddForce(upForce * (1 + DataCarrier.Instance.skills[0].level * 0.1f), ForceMode2D.Impulse);
                 // anim.SetTrigger("Flap");
+                if (doubleJump && !startCD)
+                {
+                    remainingDoubleJumps--;
 
-                canJump = false;
-                isJumping = true;
-
+                    if (remainingDoubleJumps <= 0)
+                    {
+                        canJump = false;
+                        isJumping = true;
+                        startCD = true;
+                    }
+                }
+                else
+                {
+                    canJump = false;
+                    isJumping = true;
+                }
                 anim.SetTrigger("Jump");
+            }
+            else if (Input.GetKey(KeyCode.K))
+            {
+                if (Flight) // Checks if the skill is unlocked
+                {
+                    if (isFlight) // Checks if the skill is in cooldown
+                    {
+                        if (flight_duration > 0)
+                        {
+                            flight_duration -= Time.deltaTime;
+                            if (rb2d.transform.position.y < 15f)
+                                rb2d.velocity = new Vector2(rb2d.velocity.x, rb2d.velocity.y + 10 * Time.deltaTime);
+                        }
+                        else
+                        {
+                            flight_duration = DataCarrier.Instance.skills[2].level;
+                            isFlight = false;
+                        }
+                    }
+                }
+            }
+
+            if (startCD)
+            {
+                if (doubleJumpCD > 0)
+                {
+                    doubleJumpCD -= Time.deltaTime;
+                }
+                else
+                {
+                    doubleJumpCD = storeDJCD;
+                    startCD = false;
+                }
+            }
+
+            if (!isFlight)
+            {
+                if (flightTimer > 0)
+                {
+                    flightTimer -= Time.deltaTime;
+                }
+                else
+                {
+                    flightTimer = flightCD;
+                    isFlight = true;
+                }
             }
         }
 
@@ -85,6 +175,7 @@ public class GamePlayer : MonoBehaviour
             {
                 canJump = true;
                 isJumping = false;
+                remainingDoubleJumps = 2;
                 anim.SetTrigger("Land");
             }
         }

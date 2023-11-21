@@ -9,6 +9,7 @@ public class DataCarrier : MonoBehaviour
     public string sessionTicket;
     public string displayName;
     public bool isGuest;
+    public List<Skill> skills;
     
     // Start is called before the first frame update
     void Awake()

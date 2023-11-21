@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 1793753063800070365}
   - component: {fileID: 7239993422015540862}
   - component: {fileID: -3052959146319405436}
+  - component: {fileID: 6054649914839140638}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -252,3 +253,18 @@ MonoBehaviour:
   m_SynchronizeLayers:
   - SynchronizeType: 0
     LayerIndex: 0
+--- !u!114 &6054649914839140638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8875753840370992061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 677bd5ddac77040469a58db6f5af358c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skillList: []
+  skillLevelDisplay: []
+  SPDisplay: {fileID: 0}

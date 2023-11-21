@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using PlayFab;
+using PlayFab.ClientModels;
 using UnityEngine.SocialPlatforms.Impl;
 
 public class GameController : MonoBehaviour
@@ -23,6 +25,8 @@ public class GameController : MonoBehaviour
     private int highestScore = 0;
 
     public Spawner spawner;
+
+    public TMP_Text coin_Text;
     private void Awake()
     {
         if(instance == null)
@@ -129,6 +133,7 @@ public class GameController : MonoBehaviour
         if (!DataCarrier.Instance.isGuest)
             PFDataMgr.AddPlayerScore(int.Parse(finalScoreText.text));
 
+        AddMoney();
     }
 
     private void SaveHighScore(int score)
@@ -145,5 +150,25 @@ public class GameController : MonoBehaviour
             highestScore = PlayerPrefs.GetInt("highestScore");
             //highScoreText.text = highestScore.ToString();
         }
+    }
+
+    private void AddMoney()
+    {
+        var addMoneyReq = new AddUserVirtualCurrencyRequest()
+        {
+            VirtualCurrency = "CC",
+            Amount = score / 50
+        };
+
+        PlayFabClientAPI.AddUserVirtualCurrency(addMoneyReq, r =>
+        {
+            coin_Text.text = (score / 50).ToString();
+            Debug.Log("Successfully Added Money");
+        },
+        e =>
+        {
+            Debug.Log(e.GenerateErrorReport());
+        });
+
     }
 }
