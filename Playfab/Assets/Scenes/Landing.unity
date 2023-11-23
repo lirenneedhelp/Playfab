@@ -4946,6 +4946,7 @@ MonoBehaviour:
   itemArray:
   - {fileID: 21300000, guid: 759d58d0c772d3f4886403af2185cb3f, type: 3}
   - {fileID: 21300000, guid: 5bbd68ae563e0fa4ca98d44404b0d653, type: 3}
+  - {fileID: 21300000, guid: 1531a9d138a8ebc4a94f79e0e660519c, type: 3}
 --- !u!4 &748100965
 Transform:
   m_ObjectHideFlags: 0

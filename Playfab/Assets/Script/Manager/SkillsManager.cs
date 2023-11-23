@@ -85,7 +85,8 @@ public class SkillsManager : MonoBehaviour
                 Skill skillToUpdate = skillList[i];
                 skillToUpdate.level++;
                 skillList[i] = skillToUpdate;
-                
+                DataCarrier.Instance.skills = skillList;
+
                 UpdateSPDisplay();
                 UpdateDisplaySkillLevel(i, skillToUpdate.level);
                 
