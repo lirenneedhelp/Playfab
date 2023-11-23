@@ -50,7 +50,7 @@ public class SkillsManager : MonoBehaviour
         Debug.Log("Received JSON data");
         if (r.Data != null && r.Data.ContainsKey("Skills"))
         {
-            Debug.Log(r.Data["Skills"].Value);
+            //Debug.Log(r.Data["Skills"].Value);
             JSListWrapper<Skill> jlw = JsonUtility.FromJson<JSListWrapper<Skill>>(r.Data["Skills"].Value);
             skillList = jlw.list;
             DataCarrier.Instance.skills = skillList;
@@ -108,7 +108,8 @@ public class SkillsManager : MonoBehaviour
 
     public void UpdateDisplaySkillLevel(int skillIndex, int skillLevel)
     {
-        skillLevelDisplay[skillIndex].text = "Level " + skillLevel;
+        if (skillLevelDisplay.Length > 0)
+            skillLevelDisplay[skillIndex].text = "Level " + skillLevel;
     }
 
 }

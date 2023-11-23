@@ -123,7 +123,7 @@ public class PFDataMgr : MonoBehaviour
             Debug.Log("Received JSON data");
             if (r.Data != null && r.Data.ContainsKey("PlayerData"))
             {
-                Debug.Log(r.Data["PlayerData"].Value);
+                //Debug.Log(r.Data["PlayerData"].Value);
                 JSListWrapper<PlayerData> jlw = JsonUtility.FromJson<JSListWrapper<PlayerData>>(r.Data["PlayerData"].Value);
                 
                 LevelSystem.Instance.level = jlw.list[0].level;

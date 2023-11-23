@@ -57,7 +57,8 @@ public class GameController : MonoBehaviour
 
     void AddScore()
     {
-        score += 10;
+        int multiplier = Inventory.Instance.usage > 0 ? 2 : 1;
+        score += 10 * multiplier;
         scoreText.text = score.ToString();
 
         //Check and update the level

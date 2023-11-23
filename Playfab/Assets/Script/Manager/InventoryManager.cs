@@ -42,6 +42,7 @@ public class InventoryManager : MonoBehaviour
     {
         GetVirtualCurrencies();
         GetCatalog();
+        //Inventory.Instance.GetPlayerInventory();
     }
     void UpdateMsg(string msg)
     {
@@ -78,6 +79,7 @@ public class InventoryManager : MonoBehaviour
             
             //UpdateMsg("Catalog Items");
             items = result.Catalog;
+            //Inventory.Instance.itemsList = items;
             List<ItemData> itemList = new();
 
             foreach(CatalogItem i in items)
@@ -103,43 +105,15 @@ public class InventoryManager : MonoBehaviour
         PlayFabClientAPI.PurchaseItem(buyreq,
         result => {
             UpdateMsg("Bought!");
+            GetVirtualCurrencies();
+            Inventory.Instance.GetPlayerInventory();
         },
         error=>
         {
             UpdateMsg("Not Enough Coins");
         });
     }
-    public void GetPlayerInventory()
-    {
-        var userInv = new GetUserInventoryRequest();
-        PlayFabClientAPI.GetUserInventory(userInv, 
-        result => {
-            List<ItemInstance> ii = result.Inventory;
-            //UpdateMsg("Player Inventory");
-            foreach(ItemInstance i in ii)
-            {
-                //UpdateMsg(i.DisplayName + "," + i.ItemId + "," + i.ItemInstanceId);
-            }
-        }, OnError);
-    }
-    public void UseInventoryItem(int index)
-    {
-        var userInvReq = new ConsumeItemRequest()
-        {
-            ConsumeCount = 1,
-            ItemInstanceId = items[index].ItemId,
-            CharacterId = DataCarrier.Instance.playfabID
-        };
-
-        PlayFabClientAPI.ConsumeItem(userInvReq, r =>
-        {
-
-        }, 
-        e =>
-        {
-            Debug.Log(e.GenerateErrorReport());
-        });
-    }
+    
     void PopulateShop(List<ItemData> Items)
     {
         // Clear existing leaderboard items
@@ -151,6 +125,7 @@ public class InventoryManager : MonoBehaviour
         // Create leaderboard items based on the fetched scores
         for (int i = 0; i < Items.Count; i++)
         {
+            int itemIndex = i;
             GameObject shopItem = Instantiate(itemShopPrefab, _content);
             TMP_Text itemText = shopItem.transform.Find("ItemName").GetComponent<TMP_Text>();
             TMP_Text costText = shopItem.transform.Find("CostText").GetComponent<TMP_Text>();
@@ -161,7 +136,7 @@ public class InventoryManager : MonoBehaviour
             itemImage.sprite = itemArray[i];
 
             shopItem.GetComponent<Button>().onClick.AddListener(() => {
-                BuyItem(i);
+                BuyItem(itemIndex);
             });
 
 

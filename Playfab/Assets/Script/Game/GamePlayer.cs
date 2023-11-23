@@ -192,13 +192,23 @@ public class GamePlayer : MonoBehaviour
         if (collision.gameObject.tag != "Obstacle")
             return;
 
-        //Stop the object
-        rb2d.velocity = Vector2.zero;
-        isDead = true;
         anim.SetTrigger("Hit");
 
         //Set it to Game Over
-        GameController.instance.GameOver();
+        if (Inventory.Instance.totemUsage == 0)
+        {
+            //Stop the object
+            rb2d.velocity = Vector2.zero;
+            isDead = true;
+            GameController.instance.GameOver();
+
+            if (Inventory.Instance.usage > 0)
+                Inventory.Instance.usage--;
+        }
+        else
+        {
+            Inventory.Instance.totemUsage--;
+        }
 
         if (PointParticleSystem != null)
         {
