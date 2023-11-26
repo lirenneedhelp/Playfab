@@ -23,6 +23,8 @@ public class Inventory : MonoBehaviour
     public int usage = 0;
 
     public int totemUsage = 0;
+
+    public NameChangeCard nameChangeObject;
     //public bool 
     // Start is called before the first frame update
     private void Awake()
@@ -86,7 +88,8 @@ public class Inventory : MonoBehaviour
                         images[index].sprite = itemArray[2];
                         buttons[index].onClick.AddListener(
                             () => {
-                                UseInventoryItem(itemIndex);
+                                nameChangeObject.OpenNameChange(itemIndex);
+                                //UseInventoryItem(itemIndex);
                             });
                     }
                     textArray[index].text = i.RemainingUses.ToString();

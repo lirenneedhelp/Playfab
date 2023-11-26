@@ -34,7 +34,10 @@ public class AccountManager : MonoBehaviour
                 //PhotonNetwork.LeaveRoom();
                 //PhotonNetwork.Disconnect();
                 Destroy(LevelSystem.Instance.gameObject);
-                SceneManager.LoadScene(0);
+                Destroy(Inventory.Instance.gameObject);
+
+                Time.timeScale = 1;
+                SceneManager.LoadScene("LoginScn");
             },
             error =>
             {

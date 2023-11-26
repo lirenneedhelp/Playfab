@@ -225,10 +225,9 @@ public class PlayFabUserMgt : MonoBehaviour
         Destroy(LevelSystem.Instance.gameObject);
         Destroy(Inventory.Instance.gameObject);
 
-        Debug.Log("logged out");
         Time.timeScale = 1;
         SceneManager.LoadScene("LoginScn");
-
+        Debug.Log("logged out");
     }
     public void PasswordResetRequest(){
         var req=new SendAccountRecoveryEmailRequest{
