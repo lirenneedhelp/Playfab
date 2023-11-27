@@ -114,7 +114,7 @@ public class RegisterHandler : MonoBehaviour
         // update to profile
         PlayFabClientAPI.UpdateUserTitleDisplayName(req, OnDisplayNameUpdate, OnError);
         ClearRegisterFields();
-        //UpdateMsg("Registration success!");
+        UpdateMsg("Registration success!");
 
     }
     void OnError(PlayFabError e){
