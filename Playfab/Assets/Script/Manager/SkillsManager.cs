@@ -80,6 +80,9 @@ public class SkillsManager : MonoBehaviour
         {
             if (skillList[i].name == name)
             {
+                if (LevelSystem.Instance.skillPoints <= 0)
+                    return;
+
                 LevelSystem.Instance.skillPoints--;
 
                 Skill skillToUpdate = skillList[i];
@@ -95,7 +98,6 @@ public class SkillsManager : MonoBehaviour
                     SendJSON();
                     PFDataMgr.UpdateDataJSON(LevelSystem.Instance.level, (int)LevelSystem.Instance.maxLevel, LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.skillPoints);
                 }
-                
                 return;
             }
         }
