@@ -94,10 +94,11 @@ public class RegisterHandler : MonoBehaviour
                         Msg.text = "Invalid Email";
                         Debug.LogWarning("Register Fail Invalid Email");
                         break;
+                    
 
                     default:
                         //Msg.text = "Username Available";
-                        //Msg.text = "Email Available";
+                        Msg.text = e.ErrorMessage;
                         Debug.LogWarning("Register default");
                         break;
                 } 
