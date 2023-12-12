@@ -59,6 +59,23 @@ public class ScrollView : MonoBehaviour
         });
     }
 
+    public void OnGetFriendLB(){
+        PlayFabClientAPI.GetFriendLeaderboard(
+            new GetFriendLeaderboardRequest{
+                StatisticName = "HighScore",
+                MaxResultsCount = 10
+            },
+
+            r=>{
+                
+            },
+
+            e=>{
+
+            }
+        );
+    }
+
     public void GetLeaderboardAroundPlayer()
     {
         var request = new GetLeaderboardAroundPlayerRequest
