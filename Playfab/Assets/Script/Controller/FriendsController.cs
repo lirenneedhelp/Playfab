@@ -5,6 +5,7 @@ using UnityEngine;
 public class FriendsController : MonoBehaviour
 {
     public GameObject panel;
+    [SerializeField] FriendsManagement friendManager;
     System.Action playerCallback;
 
     // Start is called before the first frame update
@@ -20,6 +21,7 @@ public class FriendsController : MonoBehaviour
     }
     public void OpenPanel(System.Action callBack = null)
     {
+        friendManager.DisplayFL();
         panel.SetActive(true);
         playerCallback = callBack;
     }

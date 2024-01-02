@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
 using TMPro;
+using Photon.Pun;
 
 public class PlayFabUserMgt : MonoBehaviour
 {
@@ -221,7 +222,7 @@ public class PlayFabUserMgt : MonoBehaviour
     public void OnButtonLogout(){
         PlayFabClientAPI.ForgetAllCredentials();
         //PhotonNetwork.LeaveRoom();
-        //PhotonNetwork.Disconnect();
+        PhotonNetwork.Disconnect();
         Destroy(LevelSystem.Instance.gameObject);
         Destroy(Inventory.Instance.gameObject);
 

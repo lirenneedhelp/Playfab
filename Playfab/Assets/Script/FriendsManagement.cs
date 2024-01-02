@@ -4,8 +4,7 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using UnityEngine;
-
-enum FriendIdType
+public enum FriendIdType
 {
     PlayFabId,
     Username,
@@ -14,9 +13,42 @@ enum FriendIdType
 }
 public class FriendsManagement : MonoBehaviour
 {
+    void OnSendFriendRequestSuccess(ExecuteCloudScriptResult result)
+    {
+        Debug.Log("Friend request sent successfully!");
+        infoMessage.text = "Friend request sent successfully!";
+    }
+
+    void OnSendFriendRequestFailure(PlayFabError error)
+    {
+        Debug.LogError("Error sending friend request: " + error.ErrorMessage);
+        infoMessage.text = "Error sending friend request: " + error.ErrorMessage;
+    }
+
+    [SerializeField] GameObject friendListPrefab;
+    [SerializeField] GameObject friendAddPanel;
+
+    [SerializeField] TMP_InputField inputField;
+    [SerializeField] TMP_Text infoMessage;
+    [SerializeField] RectTransform _content;
+
+    List<FriendInfo> _friends = null;
+
+
     void DisplayFriends(List<FriendInfo> friendsCache)
     {
+        // Clear existing leaderboard items
+        foreach (Transform child in _content.transform)
+        {
+            Destroy(child.gameObject);
+        }
 
+        friendsCache.ForEach(f =>
+        {
+            GameObject friendPrefab = Instantiate(friendListPrefab, _content);
+            //Debug.Log(f.TitleDisplayName);
+            friendPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = f.TitleDisplayName;
+        });
     }
 
     public void GetFriends()
@@ -24,13 +56,27 @@ public class FriendsManagement : MonoBehaviour
         PlayFabClientAPI.GetFriendsList(new GetFriendsListRequest {
 
         }, result=>{
+            _friends = result.Friends;
 
+            //foreach (var friendInfo in result.Friends)
+            //{
+            //    if (friendInfo.Tags.Contains("requester"))
+            //    {
+            //        // Player 2 has a friend request from this player
+            //        Debug.Log("Received friend request from: " + friendInfo.FriendPlayFabId);
+            //    }
+            //}
         }, e=>{
             Debug.Log(e.GenerateErrorReport());
         });
     }
 
-    void AddFriend(FriendIdType idType, string friendId)
+    public void DisplayFL()
+    {
+        DisplayFriends(_friends);
+    }
+
+    public void AddFriend(FriendIdType idType, string friendId)
     {
         var req = new AddFriendRequest();
 
@@ -51,15 +97,31 @@ public class FriendsManagement : MonoBehaviour
         }
 
         PlayFabClientAPI.AddFriend(req, result=>{
-
+            infoMessage.text = "Friend request sent successfully!";
+            GetFriends();
         }, e=>{
+            infoMessage.text = "Error sending friend request: " + e.ErrorMessage;
             e.GenerateErrorReport();
         });
     }
 
     public void OnAddFriend()
     {
+        string friendDisplay = inputField.text;
 
+        AddFriend(FriendIdType.Username, friendDisplay);
+
+        //ExecuteCloudScriptRequest request = new ExecuteCloudScriptRequest
+        //{
+        //    FunctionName = "SendFriendRequest", // CloudScript function name
+        //    FunctionParameter = new
+        //    {
+        //        friendDisplayName = friendDisplay
+        //        // other parameters if required by your CloudScript function
+        //    }
+        //};
+
+        //PlayFabClientAPI.ExecuteCloudScript(request, OnSendFriendRequestSuccess, OnSendFriendRequestFailure);
     }
 
     void RemoveFriend(FriendInfo friendInfo)
@@ -91,5 +153,18 @@ public class FriendsManagement : MonoBehaviour
     public void OnUnfriend()
     {
 
+    }
+
+    public void OpenFriendAddPanel()
+    {
+        friendAddPanel.SetActive(true);
+    }
+    public void CloseFriendAddPanel()
+    {
+        friendAddPanel.SetActive(false);
+    }
+    private void Start()
+    {
+        GetFriends();
     }
 }
