@@ -5,7 +5,7 @@ using Photon.Pun;
 using TMPro;
 using UnityEngine.SceneManagement;
 
-public class Player : MonoBehaviourPunCallbacks
+public class Player : MonoBehaviourPunCallbacks, IPunObservable
 {
     private float moveSpeed = 7.0f;
     private bool canMove = true;
@@ -198,6 +198,20 @@ public class Player : MonoBehaviourPunCallbacks
             canMove = true;
             animator.enabled = true;
             eButton.SetActive(true);
+        }
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            // If you are the owner, send the value to the network
+            stream.SendNext(spriteRenderer.flipX);
+        }
+        else
+        {
+            // If you are not the owner, receive the value from the network
+            spriteRenderer.flipX = (bool)stream.ReceiveNext();
         }
     }
 }

@@ -201,7 +201,7 @@ public class PlayFabUserMgt : MonoBehaviour
     }
     void OnLoginSuccess(LoginResult r){
        UpdateMsg("Login Success!");
-
+        Debug.Log(r.PlayFabId);
        if (rememberMeToggle.isOn)
        {
             PlayerPrefs.SetString(PlayerPrefsUsernameKey, userEmailOrUsername.text);

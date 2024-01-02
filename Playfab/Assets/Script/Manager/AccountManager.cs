@@ -44,31 +44,6 @@ public class AccountManager : MonoBehaviour
                 Debug.LogError("Account deletion failed: " + error.ErrorMessage);
             });
 
-            //// Define the CloudScript function request
-            //var request = new ExecuteCloudScriptRequest
-            //{
-            //    FunctionName = "deletePlayerAccount", // Specify the CloudScript function name
-            //    FunctionParameter = new { PlayFabId = DataCarrier.Instance.playfabID }
-            //};
-
-            // Call the CloudScript function
-            //PlayFabClientAPI.ExecuteCloudScript(request,
-            //    result =>
-            //    {
-            //        Debug.Log("Account deletion successful!");
-            //        PlayFabClientAPI.ForgetAllCredentials();
-            //        Destroy(LevelSystem.Instance.gameObject);
-            //        SceneManager.LoadScene(0);
-            //        //PhotonNetwork.LeaveRoom();
-            //        //PhotonNetwork.Disconnect();
-            //    },
-            //    error =>
-            //    {
-            //        Debug.LogError("Account deletion failed: " + error.ErrorMessage);
-            //    });
-
-
-
         }
     }
 }
