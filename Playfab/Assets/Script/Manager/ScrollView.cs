@@ -43,7 +43,7 @@ public class ScrollView : MonoBehaviour
         r =>
         {
              // Populate leaderboardScores with fetched data
-            List<PlayerInfo> leaderboardScores = new List<PlayerInfo>();
+            List<PlayerInfo> leaderboardScores = new();
             foreach (var entry in r.Leaderboard)
             {
                 PlayerInfo pInfo = new PlayerInfo(entry.DisplayName, entry.StatValue, entry.Position + 1, entry.PlayFabId == DataCarrier.Instance.playfabID);
@@ -67,11 +67,20 @@ public class ScrollView : MonoBehaviour
             },
 
             r=>{
-                
+                // Populate leaderboardScores with fetched data
+                List<PlayerInfo> leaderboardScores = new ();
+                foreach (var entry in r.Leaderboard)
+                {
+                    PlayerInfo pInfo = new PlayerInfo(entry.DisplayName, entry.StatValue, entry.Position + 1, entry.PlayFabId == DataCarrier.Instance.playfabID);
+                    leaderboardScores.Add(pInfo);
+                }
+
+                // Populate the leaderboard UI with the fetched data
+                PopulateLeaderboard(leaderboardScores);
             },
 
-            e=>{
-
+            error=>{
+                Debug.Log(error.GenerateErrorReport());
             }
         );
     }
@@ -88,7 +97,7 @@ public class ScrollView : MonoBehaviour
         r =>
         {
              // Populate leaderboardScores with fetched data
-            List<PlayerInfo> leaderboardScores = new List<PlayerInfo>();
+            List<PlayerInfo> leaderboardScores = new();
             foreach (var entry in r.Leaderboard)
             {
                 PlayerInfo pInfo = new PlayerInfo(entry.DisplayName, entry.StatValue, entry.Position + 1, entry.PlayFabId == DataCarrier.Instance.playfabID);

@@ -47,7 +47,7 @@ public class SkillsManager : MonoBehaviour
 
     void OnJSONDataReceived(GetUserDataResult r)
     {
-        Debug.Log("Received JSON data");
+        //Debug.Log("Received JSON data");
         if (r.Data != null && r.Data.ContainsKey("Skills"))
         {
             //Debug.Log(r.Data["Skills"].Value);

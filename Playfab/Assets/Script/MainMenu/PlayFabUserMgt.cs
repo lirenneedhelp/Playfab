@@ -201,7 +201,7 @@ public class PlayFabUserMgt : MonoBehaviour
     }
     void OnLoginSuccess(LoginResult r){
        UpdateMsg("Login Success!");
-        Debug.Log(r.PlayFabId);
+        //Debug.Log(r.PlayFabId);S
        if (rememberMeToggle.isOn)
        {
             PlayerPrefs.SetString(PlayerPrefsUsernameKey, userEmailOrUsername.text);
@@ -220,6 +220,7 @@ public class PlayFabUserMgt : MonoBehaviour
 
 
     public void OnButtonLogout(){
+        PFDataMgr.UpdatePlayerStatus(false);
         PlayFabClientAPI.ForgetAllCredentials();
         //PhotonNetwork.LeaveRoom();
         PhotonNetwork.Disconnect();

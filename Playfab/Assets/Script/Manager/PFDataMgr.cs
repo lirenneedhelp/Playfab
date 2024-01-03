@@ -3,6 +3,7 @@ using UnityEngine;
 using PlayFab;
 using PlayFab.ClientModels;
 using TMPro;
+using System;
 
 [System.Serializable]
 public struct JSListWrapper<T>
@@ -53,6 +54,10 @@ public class PFDataMgr : MonoBehaviour
 
     [SerializeField] GameObject skillsManager;
 
+    private void OnEnable()
+    {
+        UpdatePlayerStatus(true);
+    }
 
     void Awake()
     {
@@ -90,6 +95,21 @@ public class PFDataMgr : MonoBehaviour
     #endregion
 
     #region USER FUNCTIONS
+    public static void UpdatePlayerStatus(bool isOnline)
+    {
+        var request = new UpdateUserDataRequest
+        {
+            Data = new Dictionary<string, string>
+            {
+                { "Status", isOnline.ToString() },
+                { "LastLoggedIn", DateTime.Now.Ticks.ToString() }
+            },
+            Permission = UserDataPermission.Public
+
+        };
+
+        PlayFabClientAPI.UpdateUserData(request, result => { Debug.Log("Successfully updated player status"); }, e => { Debug.Log(e.GenerateErrorReport()); });
+    }
 
     // Retrieve Player Data Via JSON
     public static void UpdateDataJSON(int level, int maxLevel, float currExp, int nextLvlExp, int sp)
@@ -120,7 +140,7 @@ public class PFDataMgr : MonoBehaviour
     {
         PlayFabClientAPI.GetUserData(new GetUserDataRequest(), 
         r=>{
-            Debug.Log("Received JSON data");
+            //Debug.Log("Received JSON data");
             if (r.Data != null && r.Data.ContainsKey("PlayerData"))
             {
                 //Debug.Log(r.Data["PlayerData"].Value);

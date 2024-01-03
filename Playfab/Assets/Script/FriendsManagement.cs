@@ -5,6 +5,8 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
+
 public enum FriendIdType
 {
     PlayFabId,
@@ -30,6 +32,9 @@ public class FriendsManagement : MonoBehaviour
     [SerializeField] GameObject friendPendingPrefab;
     [SerializeField] GameObject friendAddPanel;
     [SerializeField] GameObject friendReqPanel;
+    [SerializeField] GameObject friendInfoPanel;
+    [SerializeField] GameObject friendDeletePanel;
+    [SerializeField] GameObject deletedPanel;
 
     [SerializeField] TMP_InputField inputField;
     [SerializeField] TMP_Text infoMessage;
@@ -43,6 +48,8 @@ public class FriendsManagement : MonoBehaviour
     List<FriendInfo> _pending = new();
 
     int notification_count = 0;
+
+    string friendToDelete;
 
     void DisplayFriends(List<FriendInfo> friendsCache)
     {
@@ -58,7 +65,12 @@ public class FriendsManagement : MonoBehaviour
             {
                 GameObject friendPrefab = Instantiate(friendListPrefab, _content);
                 //Debug.Log(f.TitleDisplayName);
-                friendPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = f.TitleDisplayName;
+                RetrieveFriendStatus(f.TitleDisplayName, friendPrefab);
+                friendPrefab.GetComponent<Button>().onClick.AddListener(() =>
+                {
+                    OpenFriendInfoPanel(f.TitleDisplayName); 
+
+                });
             }
         });
     }
@@ -196,13 +208,13 @@ public class FriendsManagement : MonoBehaviour
             });
             fListPendingPrefab.transform.Find("DeclineFriend").GetComponent<Button>().onClick.AddListener(() =>
             {
-                RemoveFriend(friendName, friendInfo);
+                DeclineFriend(friendName, friendInfo);
                 Destroy(fListPendingPrefab);
             });
         }
     }
 
-    void RemoveFriend(string fName, FriendInfo pendingFriend)
+    void DeclineFriend(string fName, FriendInfo pendingFriend)
     {
         string friendId = "";
 
@@ -230,6 +242,47 @@ public class FriendsManagement : MonoBehaviour
                 _pending.Remove(pendingFriend);
                 notification_count--;
                 Update_NotificationCount();
+            }, e => {
+                Debug.Log(e.GenerateErrorReport());
+            });
+        },
+        e =>
+        {
+            Debug.Log(e.GenerateErrorReport());
+            return;
+        });
+    }
+
+    public void RemoveFriend()
+    {
+        string fName = friendToDelete;
+        string friendId = "";
+
+        PlayFabClientAPI.GetAccountInfo(new()
+        {
+            TitleDisplayName = fName
+        },
+        r =>
+        {
+            friendId = r.AccountInfo.PlayFabId;
+            Debug.Log(friendId);
+
+            var request = new ExecuteCloudScriptRequest
+            {
+                FunctionName = "RemoveFriend",
+                FunctionParameter = new
+                {
+                    mainPlayFabId = DataCarrier.Instance.playfabID,
+                    friendPlayFabId = friendId
+                }
+            };
+
+            PlayFabClientAPI.ExecuteCloudScript(request, result => {
+                Debug.Log("Removed friend :-(");
+                CloseFriendDeleteConfirmationPanel();
+                deletedPanel.SetActive(true);
+                deletedPanel.transform.Find("Display").GetComponent<TMP_Text>().text = fName + " is no longer your friend :(";
+               
             }, e => {
                 Debug.Log(e.GenerateErrorReport());
             });
@@ -282,6 +335,53 @@ public class FriendsManagement : MonoBehaviour
        
 
     }
+    void RetrieveFriendStatus(string fName, GameObject targetedPrefab)
+    {
+        string friendId = "";
+
+        PlayFabClientAPI.GetAccountInfo(new()
+        {
+            TitleDisplayName = fName
+        },
+        r =>
+        {
+            friendId = r.AccountInfo.PlayFabId;
+            Debug.Log(friendId);
+            var request = new GetUserDataRequest
+            {
+                PlayFabId = friendId
+            };
+
+            PlayFabClientAPI.GetUserData(request, result=> {
+
+                if (result.Data == null || !result.Data.ContainsKey("Status"))
+                { 
+                    Debug.Log("your friend is weird?");
+                    return;
+                }
+                if (!result.Data.ContainsKey("LastLoggedIn"))
+                    return;
+
+                DateTime lastLoggedIn = new DateTime(long.Parse(result.Data["LastLoggedIn"].Value), DateTimeKind.Local);
+                TimeSpan diff = DateTime.Now - lastLoggedIn;
+
+                bool status;
+                bool.TryParse(result.Data["Status"].Value, out status);
+                targetedPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = fName;
+                TMP_Text status_text = targetedPrefab.transform.Find("PlayerStatusText").GetComponent<TMP_Text>();
+                status_text.color = status ? Color.green : Color.black;
+                status_text.text = status ? "ONLINE" : "OFF(" + TimeFormatter.FormatTimeDifference(diff) + ")";
+                //result.Data["OnlineStatus"].Value;
+
+            }, e => { });
+        },
+        e =>
+        {
+            Debug.Log(e.GenerateErrorReport());
+            return;
+        });
+
+    }
 
 
     public void OpenFriendAddPanel()
@@ -300,6 +400,30 @@ public class FriendsManagement : MonoBehaviour
     public void CloseFriendRequestPanel()
     {
         friendReqPanel.SetActive(false);
+    }
+    public void OpenFriendInfoPanel(string fName)
+    {
+        friendInfoPanel.SetActive(true);
+        friendInfoPanel.transform.Find("FriendName_Text").GetComponent<TMP_Text>().text = "name:" + fName;
+        friendDeletePanel.transform.Find("Display").GetComponent<TMP_Text>().text = "are you sure you want to remove " + fName + " as a friend?";
+        friendToDelete = fName;
+    }
+    public void CloseFriendInfoPanel()
+    {
+        friendInfoPanel.SetActive(false);
+    }
+    public void OpenFriendDeleteConfirmationPanel()
+    {
+        friendDeletePanel.SetActive(true);
+        CloseFriendInfoPanel();
+    }
+    public void CloseFriendDeleteConfirmationPanel()
+    {
+        friendDeletePanel.SetActive(false);
+    }
+    public void CloseDeletedPanel()
+    {
+        deletedPanel.SetActive(false);
     }
     private void Start()
     {
