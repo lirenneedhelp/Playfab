@@ -5,6 +5,8 @@ using TMPro;
 using UnityEngine.UI;
 using PlayFab.ClientModels;
 using PlayFab;
+using UnityEngine.EventSystems;
+using System.Linq;
 
 public class Inventory : MonoBehaviour
 {
@@ -14,8 +16,6 @@ public class Inventory : MonoBehaviour
 
     public TMP_Text[] textArray;
 
-    public Button[] buttons;
-
     public Sprite[] itemArray;
 
     public List<ItemInstance> itemsList;
@@ -23,6 +23,8 @@ public class Inventory : MonoBehaviour
     public int usage = 0;
 
     public int totemUsage = 0;
+
+    public string[] instanceIdArray;
 
     public NameChangeCard nameChangeObject;
     //public bool 
@@ -32,6 +34,8 @@ public class Inventory : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            instanceIdArray = new string[10];
+            instanceIdArray = Enumerable.Repeat("", 10).ToArray();
             GetPlayerInventory();
             DontDestroyOnLoad(gameObject);
         }
@@ -51,49 +55,46 @@ public class Inventory : MonoBehaviour
             itemsList = result.Inventory;
             int index = 0;
 
-            // Clear existing event listeners before updating the UI
-            //foreach (var button in buttons)
-            //{
-            //    button.onClick.RemoveAllListeners();
-            //}
+             //Clear existing event listeners before updating the UI
+            foreach (var button in images)
+            {
+                button.GetComponent<EventTrigger>().triggers.Clear();
+            }
 
             foreach (ItemInstance i in itemsList)
             {
-                if (i.RemainingUses > 0)
+                if (i.RemainingUses > 0 && !instanceIdArray.Contains(i.ItemInstanceId))
                 {
+                    int itemIndex = 0;
+                    instanceIdArray[index] = i.ItemInstanceId;
+
                     if (i.DisplayName == "Totem Of Undying")
                     {
-                        int itemIndex = index;
+                        itemIndex = 0;
                         images[index].sprite = itemArray[0];
-                        //buttons[index].onClick.AddListener(
-                        //    ()=> {
-                        //        UseInventoryItem(itemIndex);
-                        //        totemUsage++;
-                        //        //Debug.Log(totemUsage);
-                        //    });
                     }
                     else if (i.DisplayName == "Score Multiplier")
                     {
-                        int itemIndex = index;
+                        itemIndex = 1;
                         images[index].sprite = itemArray[1];
-                        //buttons[index].onClick.AddListener(
-                        //    () => {
-                        //        UseInventoryItem(itemIndex);
-                        //        usage++;
-                        //    });
                     }
                     else if (i.DisplayName == "Name Change Card")
                     {
-                        int itemIndex = index;
-                        images[index].sprite = itemArray[2];
-                        //buttons[index].onClick.AddListener(
-                        //    () => {
-                        //        nameChangeObject.OpenNameChange(itemIndex);
-                        //        //UseInventoryItem(itemIndex);
-                        //    });
+                        itemIndex = 2;
+                        images[index].sprite = itemArray[2];                          
                     }
+
+                    int temp = index;
+                    EventTrigger trigger = images[index].gameObject.GetComponent<EventTrigger>();
+                    EventTrigger.Entry entry = new();
+                    entry.eventID = EventTriggerType.PointerClick;
+                    entry.callback.AddListener((data) => OnRightClick((PointerEventData)data, itemIndex, temp));
+                    trigger.triggers.Add(entry);
                     //textArray[index].text = i.RemainingUses.ToString();
                 }
+
+                
+
                 index++;
                 //Debug.Log(i.DisplayName + "," + i.ItemId + "," + i.ItemInstanceId);
             }
@@ -105,6 +106,7 @@ public class Inventory : MonoBehaviour
 
     public void UseInventoryItem(int index)
     {
+        Debug.Log(index);
         var userInvReq = new ConsumeItemRequest()
         {
             ConsumeCount = 1,
@@ -119,7 +121,8 @@ public class Inventory : MonoBehaviour
             if (itemsList[index].RemainingUses - 1 == 0)
             {
                 images[index].sprite = null;
-                textArray[index].text = "";
+                instanceIdArray[index] = "";
+                //textArray[index].text = "";
             }
 
             GetPlayerInventory();
@@ -128,5 +131,28 @@ public class Inventory : MonoBehaviour
         {
             Debug.Log(e.GenerateErrorReport());
         });
+    }
+
+    private void OnRightClick(PointerEventData eventData, int itemIndex, int slotNumber)
+    {
+        if (eventData.button == PointerEventData.InputButton.Right)
+        {
+            switch (itemIndex)
+            {
+                case 0:
+                    UseInventoryItem(slotNumber);
+                    totemUsage++;
+                    Debug.Log("USING TOTEM");
+                    break;
+                case 1:
+                    UseInventoryItem(slotNumber);
+                    usage++;
+                    Debug.Log("USING SCORE MULTIPLIER");
+                    break;
+                case 2:
+                    nameChangeObject.OpenNameChange(slotNumber);
+                    break;
+            }
+        }
     }
 }
