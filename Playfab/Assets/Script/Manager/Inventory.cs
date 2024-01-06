@@ -52,10 +52,10 @@ public class Inventory : MonoBehaviour
             int index = 0;
 
             // Clear existing event listeners before updating the UI
-            foreach (var button in buttons)
-            {
-                button.onClick.RemoveAllListeners();
-            }
+            //foreach (var button in buttons)
+            //{
+            //    button.onClick.RemoveAllListeners();
+            //}
 
             foreach (ItemInstance i in itemsList)
             {
@@ -65,34 +65,34 @@ public class Inventory : MonoBehaviour
                     {
                         int itemIndex = index;
                         images[index].sprite = itemArray[0];
-                        buttons[index].onClick.AddListener(
-                            ()=> {
-                                UseInventoryItem(itemIndex);
-                                totemUsage++;
-                                //Debug.Log(totemUsage);
-                            });
+                        //buttons[index].onClick.AddListener(
+                        //    ()=> {
+                        //        UseInventoryItem(itemIndex);
+                        //        totemUsage++;
+                        //        //Debug.Log(totemUsage);
+                        //    });
                     }
                     else if (i.DisplayName == "Score Multiplier")
                     {
                         int itemIndex = index;
                         images[index].sprite = itemArray[1];
-                        buttons[index].onClick.AddListener(
-                            () => {
-                                UseInventoryItem(itemIndex);
-                                usage++;
-                            });
+                        //buttons[index].onClick.AddListener(
+                        //    () => {
+                        //        UseInventoryItem(itemIndex);
+                        //        usage++;
+                        //    });
                     }
                     else if (i.DisplayName == "Name Change Card")
                     {
                         int itemIndex = index;
                         images[index].sprite = itemArray[2];
-                        buttons[index].onClick.AddListener(
-                            () => {
-                                nameChangeObject.OpenNameChange(itemIndex);
-                                //UseInventoryItem(itemIndex);
-                            });
+                        //buttons[index].onClick.AddListener(
+                        //    () => {
+                        //        nameChangeObject.OpenNameChange(itemIndex);
+                        //        //UseInventoryItem(itemIndex);
+                        //    });
                     }
-                    textArray[index].text = i.RemainingUses.ToString();
+                    //textArray[index].text = i.RemainingUses.ToString();
                 }
                 index++;
                 //Debug.Log(i.DisplayName + "," + i.ItemId + "," + i.ItemInstanceId);

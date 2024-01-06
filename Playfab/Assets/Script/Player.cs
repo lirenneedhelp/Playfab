@@ -309,7 +309,9 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
         if (AllPlayersAccepted())
         {
-            // Do something when both players acceot the trade
+            // Do something when both players accept the trade
+            Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
+            photonView.RPC(nameof(RPC_CloseTrade), RpcTarget.All, players);
         }
 
     }
@@ -364,6 +366,13 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     void RPC_AcceptTrade(bool trade_status)
     {
         tradeAcceptance[1] = trade_status;
+    }
+
+    [PunRPC]
+    void RPC_ProcessTrade()
+    {
+        TradeManager.GiveItemTo(photonPlayer.NickName, "");
+        TradeManager.AcceptGiftFrom(photonPlayer.NickName, TradeManager.CheckForTrades());
     }
 
     #endregion

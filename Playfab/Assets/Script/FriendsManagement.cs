@@ -338,6 +338,7 @@ public class FriendsManagement : MonoBehaviour
     void RetrieveFriendStatus(string fName, GameObject targetedPrefab)
     {
         string friendId = "";
+        string accountCreatedTime = "";
 
         PlayFabClientAPI.GetAccountInfo(new()
         {
@@ -345,6 +346,7 @@ public class FriendsManagement : MonoBehaviour
         },
         r =>
         {
+            accountCreatedTime = r.AccountInfo.Created.ToString();
             friendId = r.AccountInfo.PlayFabId;
             Debug.Log(friendId);
             var request = new GetUserDataRequest
@@ -371,7 +373,7 @@ public class FriendsManagement : MonoBehaviour
                 TMP_Text status_text = targetedPrefab.transform.Find("PlayerStatusText").GetComponent<TMP_Text>();
                 status_text.color = status ? Color.green : Color.black;
                 status_text.text = status ? "ONLINE" : "OFF(" + TimeFormatter.FormatTimeDifference(diff) + ")";
-                //result.Data["OnlineStatus"].Value;
+                friendInfoPanel.transform.Find("AccountCreated_Text").GetComponent<TMP_Text>().text = accountCreatedTime;
 
             }, e => { });
         },
@@ -404,7 +406,7 @@ public class FriendsManagement : MonoBehaviour
     public void OpenFriendInfoPanel(string fName)
     {
         friendInfoPanel.SetActive(true);
-        friendInfoPanel.transform.Find("FriendName_Text").GetComponent<TMP_Text>().text = "name:" + fName;
+        friendInfoPanel.transform.Find("FriendName_Text").GetComponent<TMP_Text>().text = fName;
         friendDeletePanel.transform.Find("Display").GetComponent<TMP_Text>().text = "are you sure you want to remove " + fName + " as a friend?";
         friendToDelete = fName;
     }
