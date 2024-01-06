@@ -7,12 +7,13 @@ using PlayFab.ClientModels;
 using PlayFab;
 using UnityEngine.EventSystems;
 using System.Linq;
+using Photon.Pun;
 
-public class Inventory : MonoBehaviour
+public class Inventory : MonoBehaviourPun
 {
     public static Inventory Instance = null;
 
-    public Image[] images;
+    public InventorySlot[] inventorySlots;
 
     public TMP_Text[] textArray;
 
@@ -27,10 +28,12 @@ public class Inventory : MonoBehaviour
     public string[] instanceIdArray;
 
     public NameChangeCard nameChangeObject;
+
+    [SerializeField] GameObject itemPrefab;
     //public bool 
     // Start is called before the first frame update
     private void Awake()
-    {
+    {  
         if (Instance == null)
         {
             Instance = this;
@@ -38,6 +41,7 @@ public class Inventory : MonoBehaviour
             instanceIdArray = Enumerable.Repeat("", 10).ToArray();
             GetPlayerInventory();
             DontDestroyOnLoad(gameObject);
+            
         }
         else
         {
@@ -55,11 +59,11 @@ public class Inventory : MonoBehaviour
             itemsList = result.Inventory;
             int index = 0;
 
-             //Clear existing event listeners before updating the UI
-            foreach (var button in images)
-            {
-                button.GetComponent<EventTrigger>().triggers.Clear();
-            }
+            // //Clear existing event listeners before updating the UI
+            //foreach (var button in images)
+            //{
+            //    button.GetComponent<EventTrigger>().triggers.Clear();
+            //}
 
             foreach (ItemInstance i in itemsList)
             {
@@ -67,25 +71,28 @@ public class Inventory : MonoBehaviour
                 {
                     int itemIndex = 0;
                     instanceIdArray[index] = i.ItemInstanceId;
+                    GameObject item = Instantiate(itemPrefab, inventorySlots[index].transform);
+                    Image itemImage = item.GetComponent<Image>();
+                    item.GetComponent<DraggableItem>().itemInstanceID = i.ItemInstanceId;
 
                     if (i.DisplayName == "Totem Of Undying")
                     {
                         itemIndex = 0;
-                        images[index].sprite = itemArray[0];
+                        itemImage.sprite = itemArray[0];
                     }
                     else if (i.DisplayName == "Score Multiplier")
                     {
                         itemIndex = 1;
-                        images[index].sprite = itemArray[1];
+                        itemImage.sprite = itemArray[1];
                     }
                     else if (i.DisplayName == "Name Change Card")
                     {
                         itemIndex = 2;
-                        images[index].sprite = itemArray[2];                          
+                        itemImage.sprite = itemArray[2];                          
                     }
 
                     int temp = index;
-                    EventTrigger trigger = images[index].gameObject.GetComponent<EventTrigger>();
+                    EventTrigger trigger = item.GetComponent<EventTrigger>();
                     EventTrigger.Entry entry = new();
                     entry.eventID = EventTriggerType.PointerClick;
                     entry.callback.AddListener((data) => OnRightClick((PointerEventData)data, itemIndex, temp));
@@ -119,8 +126,8 @@ public class Inventory : MonoBehaviour
             Debug.Log("Used Item");
             //Debug.Log(itemsList[index].RemainingUses);
             if (itemsList[index].RemainingUses - 1 == 0)
-            {
-                images[index].sprite = null;
+            { 
+                Destroy(inventorySlots[index].transform.Find("Item(Clone)").gameObject);
                 instanceIdArray[index] = "";
                 //textArray[index].text = "";
             }

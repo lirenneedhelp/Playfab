@@ -5,9 +5,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class TradeManager : MonoBehaviour
 {
-    public static void GiveItemTo(string secondPlayerId, string myItemInstanceId)
+    public void GiveItemTo(string secondPlayerId, string myItemInstanceId)
     {
         
         PlayFabClientAPI.GetAccountInfo(new()
@@ -18,14 +19,19 @@ public class TradeManager : MonoBehaviour
         {
             string secondPlayfabId = r.AccountInfo.PlayFabId;
 
+            Debug.LogError(secondPlayfabId);
+
             PlayFabClientAPI.OpenTrade(new OpenTradeRequest
             {
                 AllowedPlayerIds = new List<string> { secondPlayfabId }, // PlayFab ID for the friend who will receive your gift
-                OfferedInventoryInstanceIds = new List<string> { myItemInstanceId } // The item instanceId fetched from GetUserInventory()
+                OfferedInventoryInstanceIds = new List<string> { myItemInstanceId },
+                // The item instanceId fetched from GetUserInventory()
 
             }, r =>
             {
                 Debug.Log("Sucessfully transferred item");
+                Debug.LogError(r.Trade.TradeId);
+                StartCoroutine(ProcessTradeCall(secondPlayfabId, CheckForTrades()));
             }, e =>
             {
                 Debug.Log(e.GenerateErrorReport());
@@ -40,7 +46,7 @@ public class TradeManager : MonoBehaviour
         
        
     }
-    public static string CheckForTrades()
+    public string CheckForTrades()
     {
         string tradeID = "";
         PlayFabClientAPI.GetPlayerTrades(new GetPlayerTradesRequest
@@ -50,30 +56,48 @@ public class TradeManager : MonoBehaviour
             foreach (TradeInfo tradeInfo in r.AcceptedTrades)
             {
                 Debug.Log(tradeInfo.TradeId);
+                tradeID = tradeInfo.TradeId;
             }
-            tradeID = r.AcceptedTrades[0].TradeId;
+            
         }, e => {
             Debug.Log(e.GenerateErrorReport());
-        }) ;
+        });
+        Debug.LogError(tradeID);
 
         return tradeID;
     }
 
-    public static void AcceptGiftFrom(string firstPlayFabId, string tradeId)
+    public void AcceptGiftFrom(string firstPlayFabId, string tradeId)
     {
+        Debug.LogError(firstPlayFabId);
+
         PlayFabClientAPI.AcceptTrade(new AcceptTradeRequest
         {
             OfferingPlayerId = firstPlayFabId,
             TradeId = tradeId
         }, r => {
-            foreach(var tradeInfo in r.Trade.AcceptedInventoryInstanceIds)
+            foreach (var tradeInfo in r.Trade.AcceptedInventoryInstanceIds)
             {
                 Debug.Log(tradeInfo);
             }
-            
+
             Debug.Log("Trade accepted");
-        }, e => { });
+            Inventory.Instance.GetPlayerInventory();
+
+        }, e => {
+            Debug.Log(e.GenerateErrorReport());
+        });
+ 
+       
     }
 
-    
+
+    IEnumerator ProcessTradeCall(string playFabId, string tradeId)
+    {
+        yield return new WaitForSeconds(5f);
+        AcceptGiftFrom(playFabId, tradeId);
+    }
+
+
+
 }

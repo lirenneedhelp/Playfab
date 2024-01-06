@@ -4,6 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -28,9 +29,11 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     [SerializeField] GameObject otherPlayerInfo;
     [SerializeField] GameObject tradeRequestPanel;
     [SerializeField] GameObject tradePanel;
+    [SerializeField] GameObject inventoryUI;
 
-    Photon.Realtime.Player photonPlayer;
+    [HideInInspector] public Photon.Realtime.Player photonPlayer;
     private bool[] tradeAcceptance;
+    [SerializeField] TradeManager tradeManager;
 
 
     enum CONTACT_TYPE
@@ -62,11 +65,17 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         eButton = GameObject.Find("EButton");
 
         canMove = true;
-
+        tradeAcceptance = new bool[2] { false, false };
         if (photonView.IsMine)
         {
             eButton.SetActive(false);
+            inventoryUI.SetActive(true);
+            Debug.LogError("HELLO FLECKERS");
             //photonPlayer = PhotonNetwork.LocalPlayer;
+        }
+        else
+        {
+            inventoryUI.SetActive(false);
         }
     }
 
@@ -311,7 +320,8 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         {
             // Do something when both players accept the trade
             Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
-            photonView.RPC(nameof(RPC_CloseTrade), RpcTarget.All, players);
+            photonView.RPC(nameof(RPC_ProcessTrade), RpcTarget.AllViaServer, players);
+            photonView.RPC(nameof(RPC_CloseTrade), RpcTarget.AllViaServer, players);
         }
 
     }
@@ -336,7 +346,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
         {
             if (!ArrayContainsPlayer(playerArray, player))
-                return;
+                continue;
             
             if (player != PhotonNetwork.LocalPlayer)
                 otherPlayer = player;
@@ -359,6 +369,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
             
         }
         tradePanel.SetActive(false);
+        tradeAcceptance = new bool[2] { false, false };
 
     }
 
@@ -369,10 +380,30 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     }
 
     [PunRPC]
-    void RPC_ProcessTrade()
+    void RPC_ProcessTrade(Photon.Realtime.Player[] playerArray)
     {
-        TradeManager.GiveItemTo(photonPlayer.NickName, "");
-        TradeManager.AcceptGiftFrom(photonPlayer.NickName, TradeManager.CheckForTrades());
+        Photon.Realtime.Player otherPlayer = PhotonNetwork.LocalPlayer;
+        foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
+        {
+            if (!ArrayContainsPlayer(playerArray, player))
+                continue;
+
+            if (player != PhotonNetwork.LocalPlayer)
+                otherPlayer = player;
+
+
+        }
+        Debug.LogError(otherPlayer.NickName);
+        tradeManager.GiveItemTo(otherPlayer.NickName, tradePanel.GetComponent<TradeController>().ReturnLocalPlayerItem().GetComponent<DraggableItem>().itemInstanceID);
+    }
+
+    [PunRPC]
+    void UpdateTrade(byte[] spriteBytes)
+    {
+        Texture2D texture = new Texture2D(2, 2); // Adjust dimensions accordingly
+        ImageConversion.LoadImage(texture, spriteBytes);
+        Sprite receivedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
+        tradePanel.GetComponent<TradeController>().UpdateSprite(receivedSprite);
     }
 
     #endregion
