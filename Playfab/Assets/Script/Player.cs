@@ -24,6 +24,15 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
     public bool isOffline = false;
 
+    [SerializeField] TMP_Text player_NameTag;
+    [SerializeField] GameObject otherPlayerInfo;
+    [SerializeField] GameObject tradeRequestPanel;
+    [SerializeField] GameObject tradePanel;
+
+    Photon.Realtime.Player photonPlayer;
+    private bool[] tradeAcceptance;
+
+
     enum CONTACT_TYPE
     {
         NIL,
@@ -45,7 +54,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 
-        guildPanel = GameObject.FindGameObjectWithTag("Guild"); 
+        guildPanel = GameObject.FindGameObjectWithTag("Guild");
         shopPanel = GameObject.FindGameObjectWithTag("Shop");
         friendsPanel = GameObject.FindGameObjectWithTag("Friends");
         leaderPanel = GameObject.FindGameObjectWithTag("Leaderboard");
@@ -53,7 +62,12 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         eButton = GameObject.Find("EButton");
 
         canMove = true;
-        eButton.SetActive(false);
+
+        if (photonView.IsMine)
+        {
+            eButton.SetActive(false);
+            //photonPlayer = PhotonNetwork.LocalPlayer;
+        }
     }
 
     // Update is called once per frame
@@ -61,6 +75,33 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     {
         if (photonView.IsMine || isOffline)
         {
+            if (DataCarrier.Instance.displayName != "")
+                player_NameTag.text = DataCarrier.Instance.displayName;
+
+            if (player_NameTag.text.Length > 0)
+            {
+                // Get the position of the player in world space
+                Vector3 playerWorldPosition = transform.position;
+
+                playerWorldPosition.y += 1f;
+
+                // Convert the player's world position to screen space
+                Vector3 nameTagScreenPosition = Camera.main.WorldToScreenPoint(playerWorldPosition);
+                // Calculate the x-coordinate adjustment based on text length
+                //Debug.Log(player_NameTag.text.Length);
+                float xOffset = 13.5f * (5f - player_NameTag.text.Length * 0.5f + 1.75f);
+                //Debug.Log(xOffset);
+
+                // Adjust the x-coordinate to move the text
+                nameTagScreenPosition.x += xOffset;
+
+                //Debug.Log(nameTagScreenPosition.x);
+
+
+                // Set the position of the name tag UI
+                player_NameTag.transform.position = nameTagScreenPosition;
+            }
+
             if (canMove)
             {
                 directionX = Input.GetAxisRaw("Horizontal");
@@ -77,7 +118,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
                         case CONTACT_TYPE.FRIEND:
                             friendsPanel.GetComponent<FriendsController>().OpenPanel(ClosePanel);
-                                  break;
+                            break;
 
                         case CONTACT_TYPE.LEADERBOARD:
                             leaderPanel.GetComponent<LeaderboardController>().OpenPanel(ClosePanel);
@@ -92,7 +133,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
                             break;
                     }
 
-                    if(contactType != CONTACT_TYPE.NIL)
+                    if (contactType != CONTACT_TYPE.NIL)
                     {
                         canMove = false;
                         rigidBody2D.velocity = Vector3.zero;
@@ -114,7 +155,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
     public void GoToGame()
     {
-        if(!isOffline)
+        if (!isOffline)
         {
             PhotonNetwork.Disconnect();
             PhotonNetwork.LoadLevel(2);
@@ -127,13 +168,13 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
     private void UpdateAnimationUpdate()
     {
-        if(directionX > 0f)
+        if (directionX > 0f)
         {
             animator.SetBool("Is_Running", true);
             spriteRenderer.flipX = false;
 
         }
-        else if(directionX < 0f)
+        else if (directionX < 0f)
         {
             animator.SetBool("Is_Running", true);
             spriteRenderer.flipX = true;
@@ -155,7 +196,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
                 currentText.text = "Guild";
             }
             else if (collision.gameObject.CompareTag("Shop"))
-            {           
+            {
                 contactType = CONTACT_TYPE.SHOP;
                 eButton.SetActive(true);
                 currentText.text = "Shop";
@@ -201,17 +242,170 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
+    public void OpenPlayerInfo()
+    {
+        if (PhotonNetwork.LocalPlayer.NickName == player_NameTag.text)
+            return;
+
+        string PlayerName = player_NameTag.text;
+        photonPlayer = FindPlayerByNickname(PlayerName);
+        otherPlayerInfo.transform.Find("Display").GetComponent<TMP_Text>().text = PlayerName;
+        otherPlayerInfo.SetActive(true);
+
+    }
+
+    public void ClosePlayerInfo()
+    {
+        otherPlayerInfo.SetActive(false);
+    }
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
             // If you are the owner, send the value to the network
             stream.SendNext(spriteRenderer.flipX);
+            stream.SendNext(player_NameTag.text);
+            stream.SendNext(player_NameTag.transform.position);
+            //stream.SendNext(transform.position);
         }
         else
         {
             // If you are not the owner, receive the value from the network
             spriteRenderer.flipX = (bool)stream.ReceiveNext();
+            player_NameTag.text = (string)stream.ReceiveNext();
+            player_NameTag.transform.position = (Vector3)stream.ReceiveNext();
+            //transform.position = (Vector3)stream.ReceiveNext();
         }
+    }
+
+    public void OpenTradePanel()
+    {
+        ClosePlayerInfo();
+        photonView.RPC(nameof(RPC_InitiateTrade), photonPlayer, PhotonNetwork.LocalPlayer.NickName);
+    }
+
+    public void CloseTradePanel()
+    {
+        tradeRequestPanel.SetActive(false);
+    }
+
+    public void OpenTrade()
+    {
+        CloseTradePanel();
+        Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
+        photonView.RPC(nameof(RPC_OpenTrade), RpcTarget.AllViaServer, players);
+    }
+    public void CloseTrade()
+    {
+        Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
+        photonView.RPC(nameof(RPC_CloseTrade), RpcTarget.AllViaServer, players);
+
+    }
+    public void AcceptTrade()
+    {
+        tradeAcceptance[0] = true;
+        photonView.RPC(nameof(RPC_AcceptTrade), photonPlayer, true);
+
+        if (AllPlayersAccepted())
+        {
+            // Do something when both players acceot the trade
+        }
+
+    }
+
+
+    #region RPC_FUNCTION
+
+
+    [PunRPC]
+    void RPC_InitiateTrade(string initiator)
+    {
+        tradeRequestPanel.SetActive(true);
+        tradeRequestPanel.transform.Find("Display").GetComponent<TMP_Text>().text = initiator + " wants to trade with you";
+        photonPlayer = FindPlayerByNickname(initiator);
+    }
+
+  
+    [PunRPC]
+    void RPC_OpenTrade(Photon.Realtime.Player[] playerArray)
+    {
+        Photon.Realtime.Player otherPlayer = PhotonNetwork.LocalPlayer;
+        foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
+        {
+            if (!ArrayContainsPlayer(playerArray, player))
+                return;
+            
+            if (player != PhotonNetwork.LocalPlayer)
+                otherPlayer = player;
+            
+
+        }
+        tradePanel.SetActive(true);
+        tradePanel.transform.Find("Trading_Local").Find("LocalPlayerDisplay").GetComponent<TMP_Text>().text = PhotonNetwork.LocalPlayer.NickName + "'s trade";
+        tradePanel.transform.Find("Trading_Other").Find("Other_Display").GetComponent<TMP_Text>().text = otherPlayer.NickName + "'s trade";
+
+    }
+
+    [PunRPC]
+    void RPC_CloseTrade(Photon.Realtime.Player[] playerArray)
+    {
+        foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
+        {
+            if (!ArrayContainsPlayer(playerArray, player))
+                return;
+            
+        }
+        tradePanel.SetActive(false);
+
+    }
+
+    [PunRPC]
+    void RPC_AcceptTrade(bool trade_status)
+    {
+        tradeAcceptance[1] = trade_status;
+    }
+
+    #endregion
+
+    // Function to find Photon player by nickname
+    public static Photon.Realtime.Player FindPlayerByNickname(string nickname)
+    {
+        Photon.Realtime.Player[] photonPlayers = PhotonNetwork.PlayerList;
+
+        foreach (Photon.Realtime.Player player in photonPlayers)
+        {
+            if (player.NickName == nickname)
+            {
+                // Match found
+                return player;
+            }
+        }
+
+        // No match found
+        return null;
+    }
+    bool ArrayContainsPlayer(Photon.Realtime.Player[] players, Photon.Realtime.Player targetPlayer)
+    {
+        foreach (Photon.Realtime.Player player in players)
+        {
+            if (player == targetPlayer)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    bool AllPlayersAccepted()
+    {
+        // Check if all players in the trade have accepted
+        for (int i = 0; i < tradeAcceptance.Length; i++)
+        {
+            if (!tradeAcceptance[i])
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }

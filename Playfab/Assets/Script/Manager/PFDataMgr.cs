@@ -4,6 +4,7 @@ using PlayFab;
 using PlayFab.ClientModels;
 using TMPro;
 using System;
+using Photon.Pun;
 
 [System.Serializable]
 public struct JSListWrapper<T>
@@ -250,8 +251,10 @@ public class PFDataMgr : MonoBehaviour
         },
         result => 
         {
-            displayNameText.text = result.PlayerProfile.DisplayName;
-            DataCarrier.Instance.displayName = result.PlayerProfile.DisplayName;
+            string displayName = result.PlayerProfile.DisplayName;
+            displayNameText.text = displayName;
+            DataCarrier.Instance.displayName = displayName;
+            PhotonNetwork.LocalPlayer.NickName = displayName;
         },
         error => Debug.LogError(error.GenerateErrorReport()));
     }
