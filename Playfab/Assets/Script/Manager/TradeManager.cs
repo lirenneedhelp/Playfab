@@ -29,16 +29,8 @@ public class TradeManager : MonoBehaviour
 
             }, r =>
             {
-                Debug.Log("Sucessfully transferred item");
-                Debug.LogError(r.Trade.TradeId);
-                PlayFabClientAPI.GetAccountInfo(new()
-                {
-                    TitleDisplayName = firstPlayerId
-                },
-                result => {
-                    ProcessTradeCall(result.AccountInfo.PlayFabId, r.Trade.TradeId);
-                },
-                e => { });
+                Debug.Log("Sucessfully Opened Trade");
+                AcceptGiftFrom(firstPlayerId, r.Trade.TradeId);
             }, 
             e =>
             {
@@ -75,27 +67,36 @@ public class TradeManager : MonoBehaviour
         return tradeID;
     }
 
-    public void AcceptGiftFrom(string firstPlayFabId, string tradeId)
+    public void AcceptGiftFrom(string playerName, string tradeId)
     {
-        Debug.LogError(firstPlayFabId);
-
-        PlayFabClientAPI.AcceptTrade(new AcceptTradeRequest
+        PlayFabClientAPI.GetAccountInfo(new()
         {
-            OfferingPlayerId = firstPlayFabId,
-            TradeId = tradeId
-        }, r => {
-            foreach (var tradeInfo in r.Trade.AcceptedInventoryInstanceIds)
+            TitleDisplayName = playerName
+        },
+        result => {
+            PlayFabClientAPI.AcceptTrade(new AcceptTradeRequest
             {
-                Debug.Log(tradeInfo);
-            }
+                OfferingPlayerId = result.AccountInfo.PlayFabId,
+                TradeId = tradeId
+            }, r => {
+                foreach (var tradeInfo in r.Trade.AcceptedInventoryInstanceIds)
+                {
+                    Debug.Log(tradeInfo);
+                }
 
-            Debug.Log("Trade accepted");
-            Inventory.Instance.GetPlayerInventory();
+                Debug.Log("Trade accepted");
+                Inventory.Instance.GetPlayerInventory();
 
-        }, e => {
-            Debug.Log(e.GenerateErrorReport());
+            }, e => {
+                Debug.Log(e.GenerateErrorReport());
+            });
+
+        },
+        e => {
+            Debug.LogError("No gifts");
         });
- 
+
+        
        
     }
 
