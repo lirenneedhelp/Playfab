@@ -394,7 +394,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
         }
         Debug.LogError(otherPlayer.NickName);
-        tradeManager.GiveItemTo(otherPlayer.NickName, tradePanel.GetComponent<TradeController>().ReturnLocalPlayerItem().GetComponent<DraggableItem>().itemInstanceID);
+        tradeManager.GiveItemTo(otherPlayer.NickName, tradePanel.GetComponent<TradeController>().ReturnLocalPlayerItem().GetComponent<DraggableItem>().itemInstanceID, PhotonNetwork.LocalPlayer.NickName);
     }
 
     [PunRPC]

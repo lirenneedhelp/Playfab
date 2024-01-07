@@ -8,7 +8,7 @@ using UnityEngine;
 
 public class TradeManager : MonoBehaviour
 {
-    public void GiveItemTo(string secondPlayerId, string myItemInstanceId)
+    public void GiveItemTo(string secondPlayerId, string myItemInstanceId, string firstPlayerId)
     {
         
         PlayFabClientAPI.GetAccountInfo(new()
@@ -31,8 +31,16 @@ public class TradeManager : MonoBehaviour
             {
                 Debug.Log("Sucessfully transferred item");
                 Debug.LogError(r.Trade.TradeId);
-                StartCoroutine(ProcessTradeCall(secondPlayfabId, CheckForTrades()));
-            }, e =>
+                PlayFabClientAPI.GetAccountInfo(new()
+                {
+                    TitleDisplayName = firstPlayerId
+                },
+                result => {
+                    ProcessTradeCall(result.AccountInfo.PlayFabId, r.Trade.TradeId);
+                },
+                e => { });
+            }, 
+            e =>
             {
                 Debug.Log(e.GenerateErrorReport());
             });
@@ -56,9 +64,9 @@ public class TradeManager : MonoBehaviour
             foreach (TradeInfo tradeInfo in r.AcceptedTrades)
             {
                 Debug.Log(tradeInfo.TradeId);
-                tradeID = tradeInfo.TradeId;
+                
             }
-            
+            tradeID = r.AcceptedTrades[0].TradeId;
         }, e => {
             Debug.Log(e.GenerateErrorReport());
         });
