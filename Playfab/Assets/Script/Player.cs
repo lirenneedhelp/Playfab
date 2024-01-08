@@ -35,6 +35,8 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     private bool[] tradeAcceptance;
     [SerializeField] TradeManager tradeManager;
 
+    PhotonView pv;
+
 
     enum CONTACT_TYPE
     {
@@ -66,11 +68,15 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
         canMove = true;
         tradeAcceptance = new bool[2] { false, false };
-        if (photonView.IsMine)
+
+        pv = GetComponent<PhotonView>();
+
+
+        if (pv.IsMine)
         {
             eButton.SetActive(false);
             inventoryUI.SetActive(true);
-            Debug.LogError("HELLO FLECKERS");
+            //Debug.LogError("HELLO FLECKERS");
             //photonPlayer = PhotonNetwork.LocalPlayer;
         }
         else
@@ -82,7 +88,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     // Update is called once per frame
     void Update()
     {
-        if (photonView.IsMine || isOffline)
+        if (pv.IsMine || isOffline)
         {
             if (DataCarrier.Instance.displayName != "")
                 player_NameTag.text = DataCarrier.Instance.displayName;
@@ -98,11 +104,11 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
                 Vector3 nameTagScreenPosition = Camera.main.WorldToScreenPoint(playerWorldPosition);
                 // Calculate the x-coordinate adjustment based on text length
                 //Debug.Log(player_NameTag.text.Length);
-                float xOffset = 13.5f * (5f - player_NameTag.text.Length * 0.5f + 1.75f);
+                //float xOffset = 13.5f * (5f - player_NameTag.text.Length * 0.5f + 1.75f);
                 //Debug.Log(xOffset);
 
                 // Adjust the x-coordinate to move the text
-                nameTagScreenPosition.x += xOffset;
+                //nameTagScreenPosition.x += xOffset;
 
                 //Debug.Log(nameTagScreenPosition.x);
 
@@ -291,7 +297,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     public void OpenTradePanel()
     {
         ClosePlayerInfo();
-        photonView.RPC(nameof(RPC_InitiateTrade), photonPlayer, PhotonNetwork.LocalPlayer.NickName);
+        pv.RPC(nameof(RPC_InitiateTrade), photonPlayer, PhotonNetwork.LocalPlayer.NickName);
     }
 
     public void CloseTradePanel()
@@ -303,25 +309,25 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     {
         CloseTradePanel();
         Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
-        photonView.RPC(nameof(RPC_OpenTrade), RpcTarget.AllViaServer, players);
+        pv.RPC(nameof(RPC_OpenTrade), RpcTarget.AllViaServer, players);
     }
     public void CloseTrade()
     {
         Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
-        photonView.RPC(nameof(RPC_CloseTrade), RpcTarget.AllViaServer, players);
+        pv.RPC(nameof(RPC_CloseTrade), RpcTarget.AllViaServer, players);
 
     }
     public void AcceptTrade()
     {
         tradeAcceptance[0] = true;
-        photonView.RPC(nameof(RPC_AcceptTrade), photonPlayer, true);
+        pv.RPC(nameof(RPC_AcceptTrade), photonPlayer, true);
 
         if (AllPlayersAccepted())
         {
             // Do something when both players accept the trade
             Photon.Realtime.Player[] players = new Photon.Realtime.Player[] { PhotonNetwork.LocalPlayer, photonPlayer };
-            photonView.RPC(nameof(RPC_ProcessTrade), RpcTarget.AllViaServer, players);
-            photonView.RPC(nameof(RPC_CloseTrade), RpcTarget.AllViaServer, players);
+            pv.RPC(nameof(RPC_ProcessTrade), RpcTarget.All, players);
+            pv.RPC(nameof(RPC_CloseTrade), RpcTarget.AllViaServer, players);
         }
 
     }
@@ -370,7 +376,8 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         }
         tradePanel.SetActive(false);
         tradeAcceptance = new bool[2] { false, false };
-
+        tradePanel.GetComponent<TradeController>().DestroySlotChild();
+        tradePanel.GetComponent<TradeController>().UpdateSprite(null);
     }
 
     [PunRPC]
@@ -382,6 +389,9 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     [PunRPC]
     void RPC_ProcessTrade(Photon.Realtime.Player[] playerArray)
     {
+        Debug.LogError(playerArray[0].NickName);
+        Debug.LogError(playerArray[1].NickName);
+
         Photon.Realtime.Player otherPlayer = PhotonNetwork.LocalPlayer;
         foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
         {
@@ -393,8 +403,14 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
 
         }
-        Debug.LogError(otherPlayer.NickName);
-        tradeManager.GiveItemTo(otherPlayer.NickName, tradePanel.GetComponent<TradeController>().ReturnLocalPlayerItem().GetComponent<DraggableItem>().itemInstanceID, PhotonNetwork.LocalPlayer.NickName);
+        //Debug.LogError(otherPlayer.NickName);
+        tradeManager.GiveItemTo(otherPlayer.NickName, tradePanel.GetComponent<TradeController>().ReturnLocalPlayerItem(), PhotonNetwork.LocalPlayer.NickName);
+    }
+
+    [PunRPC]
+    void RPC_CompleteTrade(string gifter, string tradeId)
+    {
+        tradeManager.AcceptGiftFrom(gifter, tradeId);
     }
 
     [PunRPC]

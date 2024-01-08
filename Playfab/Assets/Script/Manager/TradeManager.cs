@@ -1,3 +1,4 @@
+using Photon.Pun;
 using PlayFab;
 using PlayFab.ClientModels;
 using System;
@@ -19,7 +20,7 @@ public class TradeManager : MonoBehaviour
         {
             string secondPlayfabId = r.AccountInfo.PlayFabId;
 
-            Debug.LogError(secondPlayfabId);
+            //Debug.LogError(secondPlayfabId);
 
             PlayFabClientAPI.OpenTrade(new OpenTradeRequest
             {
@@ -29,8 +30,9 @@ public class TradeManager : MonoBehaviour
 
             }, r =>
             {
-                Debug.Log("Sucessfully Opened Trade");
-                AcceptGiftFrom(firstPlayerId, r.Trade.TradeId);
+                Debug.LogError("Sucessfully Opened Trade");
+                transform.root.GetComponent<PhotonView>().RPC("RPC_CompleteTrade", Player.FindPlayerByNickname(secondPlayerId), firstPlayerId, r.Trade.TradeId);
+                //AcceptGiftFrom(firstPlayerId, r.Trade.TradeId);
             }, 
             e =>
             {
@@ -73,7 +75,8 @@ public class TradeManager : MonoBehaviour
         {
             TitleDisplayName = playerName
         },
-        result => {
+        result =>
+        {
             PlayFabClientAPI.AcceptTrade(new AcceptTradeRequest
             {
                 OfferingPlayerId = result.AccountInfo.PlayFabId,
@@ -92,12 +95,13 @@ public class TradeManager : MonoBehaviour
             });
 
         },
-        e => {
+        e =>
+        {
             Debug.LogError("No gifts");
         });
 
-        
-       
+
+
     }
 
 

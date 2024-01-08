@@ -60,17 +60,23 @@ public class Inventory : MonoBehaviourPun
             int index = 0;
 
             // //Clear existing event listeners before updating the UI
-            //foreach (var button in images)
-            //{
-            //    button.GetComponent<EventTrigger>().triggers.Clear();
-            //}
+            foreach (var slot in inventorySlots)
+            {
+                if (slot.transform.childCount > 0)
+                {
+                    foreach (Transform child in slot.transform)
+                    {
+                        // Destroy each child
+                        Destroy(child.gameObject);
+                    }
+                }
+            }
 
             foreach (ItemInstance i in itemsList)
             {
-                if (i.RemainingUses > 0 && !instanceIdArray.Contains(i.ItemInstanceId))
+                if (i.RemainingUses > 0)
                 {
                     int itemIndex = 0;
-                    instanceIdArray[index] = i.ItemInstanceId;
                     GameObject item = Instantiate(itemPrefab, inventorySlots[index].transform);
                     Image itemImage = item.GetComponent<Image>();
                     item.GetComponent<DraggableItem>().itemInstanceID = i.ItemInstanceId;
@@ -128,7 +134,6 @@ public class Inventory : MonoBehaviourPun
             if (itemsList[index].RemainingUses - 1 == 0)
             { 
                 Destroy(inventorySlots[index].transform.Find("Item(Clone)").gameObject);
-                instanceIdArray[index] = "";
                 //textArray[index].text = "";
             }
 

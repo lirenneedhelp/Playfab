@@ -12,9 +12,16 @@ public class TradeController : MonoBehaviour
     {
         otherPlayerItem.GetComponent<Image>().sprite = sprite;
     }
-    public GameObject ReturnLocalPlayerItem()
+    public string ReturnLocalPlayerItem()
     {
-        return localPlayerItem.transform.Find("Item(Clone)").gameObject;
+        return localPlayerItem.transform.Find("Item(Clone)").gameObject.GetComponent<DraggableItem>().itemInstanceID;
+    }
+    public void DestroySlotChild()
+    {
+        foreach (Transform child in localPlayerItem.transform)
+        {
+            Destroy(child.gameObject);
+        }
     }
 
     // Update is called once per frame
