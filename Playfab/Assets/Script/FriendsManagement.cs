@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using Photon.Pun;
 
 public enum FriendIdType
 {
@@ -16,12 +17,6 @@ public enum FriendIdType
 }
 public class FriendsManagement : MonoBehaviour
 {
-    void OnSendFriendRequestSuccess(ExecuteCloudScriptResult result)
-    {
-        Debug.Log("Friend request sent successfully!");
-        infoMessage.text = "Friend request sent successfully!";
-    }
-
     void OnSendFriendRequestFailure(PlayFabError error)
     {
         Debug.LogError("Error sending friend request: " + error.ErrorMessage);
@@ -174,7 +169,11 @@ public class FriendsManagement : MonoBehaviour
                 }
             };
 
-            PlayFabClientAPI.ExecuteCloudScript(request, OnSendFriendRequestSuccess, OnSendFriendRequestFailure);
+            PlayFabClientAPI.ExecuteCloudScript(request, 
+            result =>{
+                Debug.Log("Friend request sent successfully!");
+                infoMessage.text = "Friend request sent successfully!";
+            }, OnSendFriendRequestFailure);
         },
         e =>
         {

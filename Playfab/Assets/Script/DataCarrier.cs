@@ -7,6 +7,8 @@ public class DataCarrier : MonoBehaviour
     public static DataCarrier Instance = null;
     public string playfabID;
     public string sessionTicket;
+
+    public string entityId;
     public string displayName;
     public bool isGuest;
     public List<Skill> skills;
