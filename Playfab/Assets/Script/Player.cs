@@ -91,7 +91,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         if (pv.IsMine || isOffline)
         {
             if (DataCarrier.Instance.displayName != "")
-                player_NameTag.text = DataCarrier.Instance.displayName;
+                player_NameTag.text = "(" + LevelSystem.Instance.level + ") " + DataCarrier.Instance.displayName;
 
             if (player_NameTag.text.Length > 0)
             {
