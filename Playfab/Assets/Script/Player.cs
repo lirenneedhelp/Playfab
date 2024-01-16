@@ -282,6 +282,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
             stream.SendNext(spriteRenderer.flipX);
             stream.SendNext(player_NameTag.text);
             stream.SendNext(player_NameTag.transform.position);
+            stream.SendNext(LevelSystem.Instance.level);
             //stream.SendNext(transform.position);
         }
         else
@@ -290,6 +291,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
             spriteRenderer.flipX = (bool)stream.ReceiveNext();
             player_NameTag.text = (string)stream.ReceiveNext();
             player_NameTag.transform.position = (Vector3)stream.ReceiveNext();
+            LevelSystem.Instance.level = (int)stream.ReceiveNext();
             //transform.position = (Vector3)stream.ReceiveNext();
         }
     }
