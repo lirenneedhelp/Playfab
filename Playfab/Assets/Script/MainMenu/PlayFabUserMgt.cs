@@ -215,8 +215,9 @@ public class PlayFabUserMgt : MonoBehaviour
        }
        DataCarrier.Instance.playfabID = r.PlayFabId;
        DataCarrier.Instance.sessionTicket = r.SessionTicket;
-       DataCarrier.Instance.entityId = r.EntityToken.Entity.Id;
-       
+       DataCarrier.Instance.entityID = r.EntityToken.Entity.Id;
+       DataCarrier.Instance.entityType = r.EntityToken.Entity.Type;
+
        SceneManager.LoadScene(1);
     }
 

@@ -102,15 +102,6 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
                 // Convert the player's world position to screen space
                 Vector3 nameTagScreenPosition = Camera.main.WorldToScreenPoint(playerWorldPosition);
-                // Calculate the x-coordinate adjustment based on text length
-                //Debug.Log(player_NameTag.text.Length);
-                //float xOffset = 13.5f * (5f - player_NameTag.text.Length * 0.5f + 1.75f);
-                //Debug.Log(xOffset);
-
-                // Adjust the x-coordinate to move the text
-                //nameTagScreenPosition.x += xOffset;
-
-                //Debug.Log(nameTagScreenPosition.x);
 
 
                 // Set the position of the name tag UI
@@ -282,7 +273,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
             stream.SendNext(spriteRenderer.flipX);
             stream.SendNext(player_NameTag.text);
             stream.SendNext(player_NameTag.transform.position);
-            stream.SendNext(LevelSystem.Instance.level);
+            //stream.SendNext(LevelSystem.Instance.level);
             //stream.SendNext(transform.position);
         }
         else
@@ -291,7 +282,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
             spriteRenderer.flipX = (bool)stream.ReceiveNext();
             player_NameTag.text = (string)stream.ReceiveNext();
             player_NameTag.transform.position = (Vector3)stream.ReceiveNext();
-            LevelSystem.Instance.level = (int)stream.ReceiveNext();
+            //LevelSystem.Instance.level = (int)stream.ReceiveNext();
             //transform.position = (Vector3)stream.ReceiveNext();
         }
     }

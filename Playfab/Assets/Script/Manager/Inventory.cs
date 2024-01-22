@@ -40,7 +40,7 @@ public class Inventory : MonoBehaviourPun
             instanceIdArray = new string[10];
             instanceIdArray = Enumerable.Repeat("", 10).ToArray();
             GetPlayerInventory();
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
             
         }
         else

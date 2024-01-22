@@ -9166,7 +9166,7 @@ GameObject:
   - component: {fileID: 779191300}
   - component: {fileID: 779191299}
   m_Layer: 5
-  m_Name: CloseFriendAdd
+  m_Name: CloseGuildCreatePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9236,9 +9236,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1265934794}
-        m_TargetAssemblyTypeName: FriendsManagement, Assembly-CSharp
-        m_MethodName: CloseFriendAddPanel
+      - m_Target: {fileID: 1732620428}
+        m_TargetAssemblyTypeName: GuildTestController, Assembly-CSharp
+        m_MethodName: CloseGuildCreatePanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -14017,6 +14017,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panel: {fileID: 141755507}
+  guildTestController: {fileID: 1732620428}
 --- !u!1 &1265934793
 GameObject:
   m_ObjectHideFlags: 0
@@ -19338,7 +19339,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 25
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
 --- !u!1 &1527218122
 GameObject:
@@ -19486,6 +19487,8 @@ GameObject:
   - component: {fileID: 1538771243}
   - component: {fileID: 1538771245}
   - component: {fileID: 1538771244}
+  - component: {fileID: 1538771247}
+  - component: {fileID: 1538771246}
   m_Layer: 5
   m_Name: CreateGuildPanel
   m_TagString: Untagged
@@ -19556,6 +19559,44 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1538771242}
   m_CullTransparentMesh: 1
+--- !u!114 &1538771246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1538771242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!223 &1538771247
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1538771242}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!1 &1551732593
 GameObject:
   m_ObjectHideFlags: 0
@@ -20549,9 +20590,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1265934794}
-        m_TargetAssemblyTypeName: FriendsManagement, Assembly-CSharp
-        m_MethodName: OnAddFriend
+      - m_Target: {fileID: 1732620428}
+        m_TargetAssemblyTypeName: GuildTestController, Assembly-CSharp
+        m_MethodName: CreateGroup
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -21440,6 +21481,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   guildCreatePanel: {fileID: 1538771242}
+  guild_content: {fileID: 1711223404}
+  guild_content_prefab: {fileID: 144109195065817377, guid: 1901a376c5a25ac4d973df155ceb2ffc, type: 3}
 --- !u!4 &1732620429
 Transform:
   m_ObjectHideFlags: 0

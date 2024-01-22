@@ -155,8 +155,8 @@ public class FriendsManagement : MonoBehaviour
         r =>
         {
             friendId = r.AccountInfo.PlayFabId;
-            Debug.Log(friendDisplay);
-            Debug.Log(friendId);
+            //Debug.Log(friendDisplay);
+            //Debug.Log(friendId);
             //AddFriend(FriendIdType.Username, friendDisplay);
             ExecuteCloudScriptRequest request = new()
             {
@@ -171,7 +171,7 @@ public class FriendsManagement : MonoBehaviour
 
             PlayFabClientAPI.ExecuteCloudScript(request, 
             result =>{
-                Debug.Log("Friend request sent successfully!");
+                //Debug.Log("Friend request sent successfully!");
                 infoMessage.text = "Friend request sent successfully!";
             }, OnSendFriendRequestFailure);
         },

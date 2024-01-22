@@ -8,7 +8,8 @@ public class DataCarrier : MonoBehaviour
     public string playfabID;
     public string sessionTicket;
 
-    public string entityId;
+    public string entityID;
+    public string entityType;
     public string displayName;
     public bool isGuest;
     public List<Skill> skills;
