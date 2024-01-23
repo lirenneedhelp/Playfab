@@ -371,6 +371,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         tradeAcceptance = new bool[2] { false, false };
         tradePanel.GetComponent<TradeController>().DestroySlotChild();
         tradePanel.GetComponent<TradeController>().UpdateSprite(null);
+        Inventory.Instance.GetPlayerInventory();
     }
 
     [PunRPC]
