@@ -346,9 +346,12 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         {
             if (!ArrayContainsPlayer(playerArray, player))
                 continue;
-            
+
             if (player != PhotonNetwork.LocalPlayer)
+            {
+                photonPlayer = player;
                 otherPlayer = player;
+            }
             
 
         }
