@@ -4,14 +4,17 @@ using UnityEngine;
 using PlayFab;
 using PlayFab.GroupsModels;
 using TMPro;
-
-public class GuildTestController : MonoBehaviour
+using Photon.Pun;
+public class GuildTestController : MonoBehaviourPun
 {
     [SerializeField]
     GameObject guildCreatePanel;
 
     [SerializeField]
     GameObject guild_content, guild_content_prefab;
+
+    [SerializeField]
+    GameObject guild_invite_panel;
 
     List<PlayFab.ClientModels.GetUserDataResult> resultList = new();
     List<string> GuildNames = new();
@@ -42,7 +45,6 @@ public class GuildTestController : MonoBehaviour
                 if (!string.IsNullOrEmpty(profile.DisplayName))
                 {
                     //Debug.Log(profile.DisplayName);
-
                     var req = new PlayFab.ClientModels.GetUserDataRequest() { PlayFabId = profile.PlayerId };
                     PlayFabClientAPI.GetUserData(req,
                         result =>
@@ -139,7 +141,11 @@ public class GuildTestController : MonoBehaviour
                 { "entityType", DataCarrier.Instance.entityType }
             }
         };
-        PlayFabClientAPI.UpdateUserData(req, result => { Debug.Log("Updated Guild Leader"); }, error => { Debug.Log("Failed to update guild leader"); });
+        PlayFabClientAPI.UpdateUserData(req, result => 
+        { 
+            Debug.Log("Updated Guild Leader"); 
+        }
+        , error => { Debug.Log("Failed to update guild leader"); });
 
         var prevRequest = (CreateGroupRequest)response.Request;
         EntityGroupPairs.Add(new KeyValuePair<string, string>(prevRequest.Entity.Id, response.Group.Id));
@@ -164,11 +170,25 @@ public class GuildTestController : MonoBehaviour
         GroupNameById.Remove(prevRequest.Group.Id);
     }
 
-    public void InviteToGroup(string groupId, EntityKey entityKey)
+    public void InviteToGroup(string groupName, string playerName)
     {
-        // A player-controlled entity invites another player-controlled entity to an existing group
-        var request = new InviteToGroupRequest { Group = EntityKeyMaker(groupId), Entity = entityKey };
-        PlayFabGroupsAPI.InviteToGroup(request, OnInvite, OnSharedError);
+        var guildInfoReq = new GetGroupRequest() { GroupName = groupName};
+        PlayFabGroupsAPI.GetGroup(guildInfoReq, 
+            resultGroup => {
+                // A player-controlled entity invites another player-controlled entity to an existing group
+                //Entity Key is the player you want to invite
+                var invitedPlayerReq = new PlayFab.ClientModels.GetAccountInfoRequest() { Username = playerName };
+                PlayFabClientAPI.GetAccountInfo(invitedPlayerReq, result => 
+                {
+                    var request = new InviteToGroupRequest { Group = resultGroup.Group, Entity = EntityKeyMaker(result.AccountInfo.TitleInfo.TitlePlayerAccount.Id) };
+                    PlayFabGroupsAPI.InviteToGroup(request, response => 
+                    {
+                        photonView.RPC(nameof(RPC_SendGuildInvite), Player.FindPlayerByNickname(playerName));
+                    }, OnSharedError);
+                }, error => { });
+                
+            }, error => { });
+        
     }
     public void OnInvite(InviteToGroupResponse response)
     {
@@ -177,6 +197,7 @@ public class GuildTestController : MonoBehaviour
         // Presumably, this would be part of a separate process where the recipient reviews and accepts the request
         var request = new AcceptGroupInvitationRequest { Group = EntityKeyMaker(prevRequest.Group.Id), Entity = prevRequest.Entity };
         PlayFabGroupsAPI.AcceptGroupInvitation(request, OnAcceptInvite, OnSharedError);
+
     }
     public void OnAcceptInvite(EmptyResponse response)
     {
@@ -224,5 +245,17 @@ public class GuildTestController : MonoBehaviour
     public void CloseGuildCreatePanel()
     {
         guildCreatePanel.SetActive(false);
+    }
+
+    [PunRPC]
+    void RPC_SendGuildInvite(string groupName)
+    {
+       // guild_invite_panel.transform.Find
+        OpenGuildInvite();
+    }
+
+    void OpenGuildInvite()
+    {
+        guild_invite_panel.SetActive(true);
     }
 }
