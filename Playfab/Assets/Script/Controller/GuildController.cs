@@ -29,6 +29,7 @@ public class GuildController : MonoBehaviour
 
     public void ClosePanel()
     {
+        guildTestController.CloseGuildInfo();
         panel.SetActive(false);
         playerCallback();
     }

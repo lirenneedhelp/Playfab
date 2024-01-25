@@ -5,6 +5,7 @@ using Photon.Pun;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Text.RegularExpressions;
 
 public class Player : MonoBehaviourPunCallbacks, IPunObservable
 {
@@ -22,6 +23,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     private GameObject friendsPanel;
     private GameObject leaderPanel;
     private GameObject eButton;
+    [SerializeField] private PlayerGuild playerGuild;
 
     public bool isOffline = false;
 
@@ -250,12 +252,16 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
     public void OpenPlayerInfo()
     {
-        if (PhotonNetwork.LocalPlayer.NickName == player_NameTag.text)
+        string result = Regex.Replace(player_NameTag.text, @"\(\d+\)", "");
+        result = result.Replace(" ", "");
+
+        if (PhotonNetwork.LocalPlayer.NickName == result)
             return;
 
-        string PlayerName = player_NameTag.text;
+        string PlayerName = result;
         photonPlayer = FindPlayerByNickname(PlayerName);
-        otherPlayerInfo.transform.Find("Display").GetComponent<TMP_Text>().text = PlayerName;
+        otherPlayerInfo.transform.Find("Display").GetComponent<TMP_Text>().text = player_NameTag.text;
+        otherPlayerInfo.transform.Find("InviteToGuild").GetComponent<Button>().onClick.AddListener(() => { playerGuild.InviteToGroup(PlayerName); });
         otherPlayerInfo.SetActive(true);
 
     }
@@ -263,6 +269,8 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     public void ClosePlayerInfo()
     {
         otherPlayerInfo.SetActive(false);
+        otherPlayerInfo.transform.Find("InviteToGuild").GetComponent<Button>().onClick.RemoveAllListeners();
+
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -461,4 +469,5 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         }
         return true;
     }
+
 }

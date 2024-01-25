@@ -5,8 +5,21 @@ using PlayFab;
 using PlayFab.GroupsModels;
 using TMPro;
 using Photon.Pun;
+using UnityEngine.UI;
+
 public class GuildTestController : MonoBehaviourPun
 {
+    class GuildInfo
+    {
+        public EntityKey entityKey;
+        public string guildName;
+
+        public GuildInfo(EntityKey key, string name)
+        {
+            entityKey = key;
+            guildName = name;
+        }
+    }
     [SerializeField]
     GameObject guildCreatePanel;
 
@@ -14,10 +27,11 @@ public class GuildTestController : MonoBehaviourPun
     GameObject guild_content, guild_content_prefab;
 
     [SerializeField]
-    GameObject guild_invite_panel;
+    GameObject guild_info_panel, guild_info_content, guild_member_prefab;
 
     List<PlayFab.ClientModels.GetUserDataResult> resultList = new();
-    List<string> GuildNames = new();
+    List<PlayFab.AdminModels.PlayerProfile> listOfPlayers;
+    List<GuildInfo> guildInfos = new();
     // A local cache of some bits of PlayFab data
     // This cache pretty much only serves this example , and assumes that entities are uniquely identifiable by EntityId alone, which isn't technically true. Your data cache will have to be better.
     public readonly HashSet<KeyValuePair<string, string>> EntityGroupPairs = new HashSet<KeyValuePair<string, string>>();
@@ -38,9 +52,9 @@ public class GuildTestController : MonoBehaviourPun
         var req = new PlayFab.AdminModels.GetPlayersInSegmentRequest() { SegmentId = "7D1D5E303AB2D17" };
         PlayFabAdminAPI.GetPlayersInSegment(req, result =>
         {
-            var list = result.PlayerProfiles;
+            listOfPlayers = result.PlayerProfiles;
             resultList.Clear();
-            foreach (PlayFab.AdminModels.PlayerProfile profile in list)
+            foreach (PlayFab.AdminModels.PlayerProfile profile in listOfPlayers)
             {
                 if (!string.IsNullOrEmpty(profile.DisplayName))
                 {
@@ -73,8 +87,8 @@ public class GuildTestController : MonoBehaviourPun
         {
             if (r.Data != null && r.Data.ContainsKey("entityID") && r.Data.ContainsKey("entityType"))
             {
-                Debug.Log(r.Data["entityID"].Value);
-                Debug.Log(r.Data["entityType"].Value);
+                //Debug.Log(r.Data["entityID"].Value);
+                //Debug.Log(r.Data["entityType"].Value);
 
                 // Do something with entityID and entityType
                 var request = new ListMembershipRequest
@@ -92,13 +106,18 @@ public class GuildTestController : MonoBehaviourPun
         var prevRequest = (ListMembershipRequest)response.Request;
         Debug.Log("Finding Guild List");
 
+        guildInfos.Clear();
+
         foreach (var pair in response.Groups)
         {
             Debug.Log("Guild Found");
 
             GroupNameById[pair.Group.Id] = pair.GroupName;
+            
             EntityGroupPairs.Add(new KeyValuePair<string, string>(prevRequest.Entity.Id, pair.Group.Id));
-            GuildNames.Add(pair.GroupName);
+
+            GuildInfo newInfo = new(pair.Group, pair.GroupName); 
+            guildInfos.Add(newInfo);
 
         }
     }
@@ -112,13 +131,18 @@ public class GuildTestController : MonoBehaviourPun
             Destroy(child.gameObject);
         }
 
-        foreach (var pair in GuildNames)
+        foreach (var pair in guildInfos)
         {
             GameObject newGuildContent = Instantiate(guild_content_prefab, guild_content.transform);
 
             // Assuming there is a Text component in your prefab, set its text to the group name
+            newGuildContent.GetComponent<Button>().onClick.AddListener(() => 
+            { 
+                OpenGuildInfo(pair.guildName, pair.entityKey); 
+            });
+
             TMP_Text textComponent = newGuildContent.transform.Find("GuildNameText").GetComponent<TMP_Text>();
-            textComponent.text = pair;
+            textComponent.text = pair.guildName;
         }
     }
 
@@ -170,42 +194,6 @@ public class GuildTestController : MonoBehaviourPun
         GroupNameById.Remove(prevRequest.Group.Id);
     }
 
-    public void InviteToGroup(string groupName, string playerName)
-    {
-        var guildInfoReq = new GetGroupRequest() { GroupName = groupName};
-        PlayFabGroupsAPI.GetGroup(guildInfoReq, 
-            resultGroup => {
-                // A player-controlled entity invites another player-controlled entity to an existing group
-                //Entity Key is the player you want to invite
-                var invitedPlayerReq = new PlayFab.ClientModels.GetAccountInfoRequest() { Username = playerName };
-                PlayFabClientAPI.GetAccountInfo(invitedPlayerReq, result => 
-                {
-                    var request = new InviteToGroupRequest { Group = resultGroup.Group, Entity = EntityKeyMaker(result.AccountInfo.TitleInfo.TitlePlayerAccount.Id) };
-                    PlayFabGroupsAPI.InviteToGroup(request, response => 
-                    {
-                        photonView.RPC(nameof(RPC_SendGuildInvite), Player.FindPlayerByNickname(playerName));
-                    }, OnSharedError);
-                }, error => { });
-                
-            }, error => { });
-        
-    }
-    public void OnInvite(InviteToGroupResponse response)
-    {
-        var prevRequest = (InviteToGroupRequest)response.Request;
-
-        // Presumably, this would be part of a separate process where the recipient reviews and accepts the request
-        var request = new AcceptGroupInvitationRequest { Group = EntityKeyMaker(prevRequest.Group.Id), Entity = prevRequest.Entity };
-        PlayFabGroupsAPI.AcceptGroupInvitation(request, OnAcceptInvite, OnSharedError);
-
-    }
-    public void OnAcceptInvite(EmptyResponse response)
-    {
-        var prevRequest = (AcceptGroupInvitationRequest)response.Request;
-        Debug.Log("Entity Added to Group: " + prevRequest.Entity.Id + " to " + prevRequest.Group.Id);
-        EntityGroupPairs.Add(new KeyValuePair<string, string>(prevRequest.Entity.Id, prevRequest.Group.Id));
-    }
-
     public void ApplyToGroup(string groupId, EntityKey entityKey)
     {
         // A player-controlled entity applies to join an existing group (of which they are not already a member)
@@ -237,25 +225,52 @@ public class GuildTestController : MonoBehaviourPun
         Debug.Log("Entity kicked from Group: " + prevRequest.Members[0].Id + " to " + prevRequest.Group.Id);
         EntityGroupPairs.Remove(new KeyValuePair<string, string>(prevRequest.Members[0].Id, prevRequest.Group.Id));
     }
+ 
 
     public void OpenGuildCreatePanel()
     {
         guildCreatePanel.SetActive(true);
     }
-    public void CloseGuildCreatePanel()
+    public void CloseGuildInfo()
     {
-        guildCreatePanel.SetActive(false);
+        //guildCreatePanel.SetActive(false);
+        guild_info_panel.SetActive(false);
     }
 
-    [PunRPC]
-    void RPC_SendGuildInvite(string groupName)
+    public void OpenGuildInfo(string groupName, EntityKey group)
     {
-       // guild_invite_panel.transform.Find
-        OpenGuildInvite();
+        foreach(Transform child in guild_info_content.transform)
+        {
+            Destroy(child);
+        }
+
+        int memberCount = 0;
+        var req = new ListGroupMembersRequest() { Group = group };
+        PlayFabGroupsAPI.ListGroupMembers(req, 
+            result => {
+               
+                foreach (var entities in result.Members)
+                {
+                    var temp = entities.Members;
+
+                    foreach (var individualMember in temp)
+                    {
+                        GameObject memberLabel = Instantiate(guild_member_prefab, guild_info_content.transform);
+                        memberLabel.GetComponent<TMP_Text>().text = individualMember.Key.Id;
+                        //Debug.Log(individualMember.Key.Id);
+                        memberCount++;
+                    }
+                }
+                guild_info_panel.transform.Find("Guild_NoOfMembers").GetComponent<TMP_Text>().text = "Members: " + memberCount;
+
+            }, 
+            e => {
+                Debug.Log(e.GenerateErrorReport());
+            });
+
+        guild_info_panel.transform.Find("GuildName_Label").GetComponent<TMP_Text>().text = groupName;
+        guild_info_panel.SetActive(true);
     }
 
-    void OpenGuildInvite()
-    {
-        guild_invite_panel.SetActive(true);
-    }
+    
 }
