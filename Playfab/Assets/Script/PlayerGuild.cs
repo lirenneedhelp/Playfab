@@ -41,7 +41,7 @@ public class PlayerGuild : MonoBehaviourPun
     }
     public void InviteToGroup(string playerName)
     {
-        Debug.Log(playerName);
+        //Debug.Log(playerName);
 
         var guildInfoReq = new GetGroupRequest() { GroupName = groupName };
         PlayFabGroupsAPI.GetGroup(guildInfoReq,

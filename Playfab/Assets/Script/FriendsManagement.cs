@@ -26,7 +26,6 @@ public class FriendsManagement : MonoBehaviour
     [SerializeField] GameObject friendListPrefab;
     [SerializeField] GameObject friendPendingPrefab;
     [SerializeField] GameObject friendAddPanel;
-    [SerializeField] GameObject friendReqPanel;
     [SerializeField] GameObject friendInfoPanel;
     [SerializeField] GameObject friendDeletePanel;
     [SerializeField] GameObject deletedPanel;
@@ -34,15 +33,11 @@ public class FriendsManagement : MonoBehaviour
     [SerializeField] TMP_InputField inputField;
     [SerializeField] TMP_Text infoMessage;
     [SerializeField] RectTransform _content;
-    [SerializeField] RectTransform _pending_context;
 
-    [SerializeField] TMP_Text notificationCount;
 
     List<FriendInfo> _friends = null;
 
-    List<FriendInfo> _pending = new();
-
-    int notification_count = 0;
+    [SerializeField] NotificationManager notificationManager;
 
     string friendToDelete;
 
@@ -76,22 +71,6 @@ public class FriendsManagement : MonoBehaviour
 
         }, result=>{
             _friends = result.Friends;
-
-            foreach (var friendInfo in result.Friends)
-            {
-                if (friendInfo.Tags.Contains("requester"))
-                {
-                    // Player 2 has a friend request from this player
-                    notification_count++;
-                    Update_NotificationCount();
-
-
-                    if (!_pending.Contains(friendInfo))
-                        _pending.Add(friendInfo);
-
-                    Debug.Log("Received friend request from: " + friendInfo.FriendPlayFabId);
-                }
-            }
         }, e=>{
             Debug.Log(e.GenerateErrorReport());
         });
@@ -185,35 +164,7 @@ public class FriendsManagement : MonoBehaviour
        
     }
 
-    public void DisplayFriendRequestList()
-    {
-        // Clear existing leaderboard items
-        foreach (Transform child in _pending_context.transform)
-        {
-            Destroy(child.gameObject);
-        }
-
-        foreach(var friendInfo in _pending)
-        {
-            string friendName = friendInfo.TitleDisplayName;
-
-            GameObject fListPendingPrefab = Instantiate(friendPendingPrefab, _pending_context);
-            fListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = friendName;
-            fListPendingPrefab.transform.Find("AcceptFriend").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                AcceptFriend(friendName, friendInfo);
-                Destroy(fListPendingPrefab);
-
-            });
-            fListPendingPrefab.transform.Find("DeclineFriend").GetComponent<Button>().onClick.AddListener(() =>
-            {
-                DeclineFriend(friendName, friendInfo);
-                Destroy(fListPendingPrefab);
-            });
-        }
-    }
-
-    void DeclineFriend(string fName, FriendInfo pendingFriend)
+    public void DeclineFriend(string fName, FriendInfo pendingFriend)
     {
         string friendId = "";
 
@@ -238,9 +189,9 @@ public class FriendsManagement : MonoBehaviour
 
             PlayFabClientAPI.ExecuteCloudScript(request, result => {
                 Debug.Log("Declined friend request");
-                _pending.Remove(pendingFriend);
-                notification_count--;
-                Update_NotificationCount();
+                notificationManager._pending.Remove(pendingFriend);
+                notificationManager.notification_count--;
+                notificationManager.Update_NotificationCount();
             }, e => {
                 Debug.Log(e.GenerateErrorReport());
             });
@@ -293,7 +244,7 @@ public class FriendsManagement : MonoBehaviour
         });
     }
 
-    void AcceptFriend(string fName, FriendInfo newFriend)
+    public void AcceptFriend(string fName, FriendInfo newFriend)
     {
         string friendId = "";
 
@@ -318,9 +269,9 @@ public class FriendsManagement : MonoBehaviour
 
             PlayFabClientAPI.ExecuteCloudScript(request, result => {
                 Debug.Log("Added friend");
-                _pending.Remove(newFriend);
-                notification_count--;
-                Update_NotificationCount();
+                notificationManager._pending.Remove(newFriend);
+                notificationManager.notification_count--;
+                notificationManager.Update_NotificationCount();
             }, e => {
                 Debug.Log(e.GenerateErrorReport());
             });
@@ -393,15 +344,6 @@ public class FriendsManagement : MonoBehaviour
     {
         friendAddPanel.SetActive(false);
     }
-    public void OpenFriendRequestPanel()
-    {
-        DisplayFriendRequestList();
-        friendReqPanel.SetActive(true);
-    }
-    public void CloseFriendRequestPanel()
-    {
-        friendReqPanel.SetActive(false);
-    }
     public void OpenFriendInfoPanel(string fName)
     {
         friendInfoPanel.SetActive(true);
@@ -429,9 +371,5 @@ public class FriendsManagement : MonoBehaviour
     private void Start()
     {
         GetFriends();
-    }
-    private void Update_NotificationCount()
-    {
-       notificationCount.text = notification_count > 0 ? notification_count.ToString() : "";
     }
 }

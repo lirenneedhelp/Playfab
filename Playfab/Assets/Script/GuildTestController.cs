@@ -29,6 +29,12 @@ public class GuildTestController : MonoBehaviourPun
     [SerializeField]
     GameObject guild_info_panel, guild_info_content, guild_member_prefab;
 
+    [SerializeField]
+    GameObject guild_personal_panel, guild_personal_content, guild_personal_prefab;
+
+    [SerializeField]
+    NotificationManager notificationManager;
+
     List<PlayFab.ClientModels.GetUserDataResult> resultList = new();
     List<PlayFab.AdminModels.PlayerProfile> listOfPlayers;
     List<GuildInfo> guildInfos = new();
@@ -194,23 +200,23 @@ public class GuildTestController : MonoBehaviourPun
         GroupNameById.Remove(prevRequest.Group.Id);
     }
 
-    public void ApplyToGroup(string groupId, EntityKey entityKey)
+    public void ApplyToGroup(string groupId)
     {
         // A player-controlled entity applies to join an existing group (of which they are not already a member)
-        var request = new ApplyToGroupRequest { Group = EntityKeyMaker(groupId), Entity = entityKey };
-        PlayFabGroupsAPI.ApplyToGroup(request, OnApply, OnSharedError);
+        var request = new ApplyToGroupRequest { Group = EntityKeyMaker(groupId) };
+        PlayFabGroupsAPI.ApplyToGroup(request, r=> { Debug.Log("Successfully applied for group."); }, OnSharedError);
     }
-    public void OnApply(ApplyToGroupResponse response)
+    public void AcceptApplication(EntityKey group, EntityKey playerEntity)
     {
-        var prevRequest = (ApplyToGroupRequest)response.Request;
-
         // Presumably, this would be part of a separate process where the recipient reviews and accepts the request
-        var request = new AcceptGroupApplicationRequest { Group = prevRequest.Group, Entity = prevRequest.Entity };
+        var request = new AcceptGroupApplicationRequest { Group = group, Entity = playerEntity };
         PlayFabGroupsAPI.AcceptGroupApplication(request, OnAcceptApplication, OnSharedError);
     }
     public void OnAcceptApplication(EmptyResponse response)
     {
         var prevRequest = (AcceptGroupApplicationRequest)response.Request;
+        notificationManager.notification_count--;
+        notificationManager.Update_NotificationCount();
         Debug.Log("Entity Added to Group: " + prevRequest.Entity.Id + " to " + prevRequest.Group.Id);
     }
     public void KickMember(string groupId, EntityKey entityKey)
@@ -269,7 +275,53 @@ public class GuildTestController : MonoBehaviourPun
             });
 
         guild_info_panel.transform.Find("GuildName_Label").GetComponent<TMP_Text>().text = groupName;
+        guild_info_panel.transform.Find("Button_GuildApply").GetComponent<Button>().onClick.AddListener(() => { ApplyToGroup(group.Id); });
         guild_info_panel.SetActive(true);
+    }
+
+    public void OpenPersonalGuildInfo()
+    {
+        int memberCount = 0;
+        var request = new ListMembershipRequest();
+        PlayFabGroupsAPI.ListMembership(request,
+            r => {
+
+                foreach (var group in r.Groups)
+                {
+                    guild_personal_panel.transform.Find("GuildName_Label").GetComponent<TMP_Text>().text = group.GroupName;
+
+                    var req = new ListGroupMembersRequest() { Group = group.Group };
+                    PlayFabGroupsAPI.ListGroupMembers(req, result =>
+                    {
+                        foreach (var entities in result.Members)
+                        {
+                            var temp = entities.Members;
+
+                            foreach (var individual in temp)
+                            {
+                                GameObject memberLabel = Instantiate(guild_personal_prefab, guild_personal_content.transform);
+                                memberLabel.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = individual.Key.Id;
+                                memberCount++;
+                                memberLabel.transform.Find("RankText").GetComponent<TMP_Text>().text = memberCount.ToString();
+                            }
+                        }
+                        guild_personal_panel.transform.Find("MembersCount").GetComponent<TMP_Text>().text = "Members: " + memberCount;
+
+                    }, error => { Debug.Log(error); });
+                }
+            },
+            e => { Debug.Log(e); });
+
+        guild_personal_panel.SetActive(true);
+    }
+    public void ClosePersonalGuildInfo()
+    {
+        foreach (Transform child in guild_personal_content.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        guild_personal_panel.SetActive(false);
     }
 
     
