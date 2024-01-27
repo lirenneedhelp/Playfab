@@ -11,10 +11,10 @@ public class PlayerGuild : MonoBehaviourPun
     [SerializeField]
     GameObject guild_invite_panel;
 
-    [HideInInspector]
     string groupName = "";
 
     string groupId = "";
+
 
     // Start is called before the first frame update
     void Start()
@@ -23,12 +23,10 @@ public class PlayerGuild : MonoBehaviourPun
     }
     private void ListGroups()
     {
-        //if (photonView.IsMine)
-        {
-            var request = new ListMembershipRequest { };
-            PlayFabGroupsAPI.ListMembership(request, OnListGroups, error => { Debug.Log(error.GenerateErrorReport()); });
-        }
+        var request = new ListMembershipRequest { };
+        PlayFabGroupsAPI.ListMembership(request, OnListGroups, error => { Debug.Log(error.GenerateErrorReport()); });   
     }
+
     private void OnListGroups(ListMembershipResponse response)
     {
         var prevRequest = (ListMembershipRequest)response.Request;

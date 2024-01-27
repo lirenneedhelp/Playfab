@@ -83,7 +83,7 @@ public class NotificationManager : MonoBehaviour
             string friendName = friendInfo.TitleDisplayName;
 
             GameObject fListPendingPrefab = Instantiate(friendPendingPrefab, _pending_context);
-            fListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = friendName;
+            fListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = friendName + "(F)";
             fListPendingPrefab.transform.Find("AcceptFriend").GetComponent<Button>().onClick.AddListener(() =>
             {
                 friendManager.AcceptFriend(friendName, friendInfo);
@@ -102,7 +102,7 @@ public class NotificationManager : MonoBehaviour
             string applicantName = guildApplication.Entity.Key.Id;
 
             GameObject guildListPendingPrefab = Instantiate(guildPendingPrefab, _pending_context);
-            guildListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = applicantName;
+            guildListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = applicantName + "(G)";
             guildListPendingPrefab.transform.Find("AcceptGuildRequest").GetComponent<Button>().
                 onClick.AddListener(() => {
                     guildTestController.AcceptApplication(guildApplication.Group, guildApplication.Entity.Key);

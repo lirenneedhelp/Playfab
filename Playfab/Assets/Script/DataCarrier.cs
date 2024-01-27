@@ -12,6 +12,7 @@ public class DataCarrier : MonoBehaviour
     public string entityType;
     public string displayName;
     public bool isGuest;
+    public bool inGuild;
     public List<Skill> skills;
     
     // Start is called before the first frame update

@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
 using TMPro;
 using Photon.Pun;
+using System.Collections.Generic;
 
 public class PlayFabUserMgt : MonoBehaviour
 {
@@ -217,15 +218,51 @@ public class PlayFabUserMgt : MonoBehaviour
        DataCarrier.Instance.sessionTicket = r.SessionTicket;
        DataCarrier.Instance.entityID = r.EntityToken.Entity.Id;
        DataCarrier.Instance.entityType = r.EntityToken.Entity.Type;
+       
+        PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
+        {
+            PlayFabId = r.PlayFabId,
+            ProfileConstraints = new PlayerProfileViewConstraints()
+            {
+                ShowDisplayName = true
+            }
+        },
+        result =>
+        {
+            string displayName = result.PlayerProfile.DisplayName;
 
-       SceneManager.LoadScene(1);
+            PlayFab.DataModels.SetObjectsRequest setEData = new() { Entity = new PlayFab.DataModels.EntityKey() { Id = r.EntityToken.Entity.Id, Type = r.EntityToken.Entity.Type },
+                Objects = new List<PlayFab.DataModels.SetObject>
+                {
+                    new PlayFab.DataModels.SetObject
+                    {
+                        ObjectName = "entity_info", // Set the object name as per your requirement
+                        DataObject = new Dictionary<string, object>
+                        {
+                            { "displayName", displayName }
+                        }
+                    }
+                }
+            };
+
+            PlayFabDataAPI.SetObjects(setEData, 
+                result => {
+                    Debug.Log(result.SetResults[0]);
+                    SceneManager.LoadScene(1);
+                }, 
+                e => {
+                    Debug.Log(e.GenerateErrorReport());
+                });
+
+        },
+        error => Debug.LogError(error.GenerateErrorReport()));
+        
     }
 
 
     public void OnButtonLogout(){
         PFDataMgr.UpdatePlayerStatus(false);
         PlayFabClientAPI.ForgetAllCredentials();
-        //PhotonNetwork.LeaveRoom();
         PhotonNetwork.Disconnect();
         Destroy(LevelSystem.Instance.gameObject);
         Destroy(Inventory.Instance.gameObject);

@@ -6,9 +6,15 @@ using PlayFab.GroupsModels;
 using TMPro;
 using Photon.Pun;
 using UnityEngine.UI;
+using System;
 
 public class GuildTestController : MonoBehaviourPun
 {
+    class EntityInfo
+    {
+        public string displayName;
+    }
+
     class GuildInfo
     {
         public EntityKey entityKey;
@@ -33,15 +39,14 @@ public class GuildTestController : MonoBehaviourPun
     GameObject guild_personal_panel, guild_personal_content, guild_personal_prefab;
 
     [SerializeField]
+    GameObject guild_member_panel;
+
+    [SerializeField]
     NotificationManager notificationManager;
 
     List<PlayFab.ClientModels.GetUserDataResult> resultList = new();
     List<PlayFab.AdminModels.PlayerProfile> listOfPlayers;
     List<GuildInfo> guildInfos = new();
-    // A local cache of some bits of PlayFab data
-    // This cache pretty much only serves this example , and assumes that entities are uniquely identifiable by EntityId alone, which isn't technically true. Your data cache will have to be better.
-    public readonly HashSet<KeyValuePair<string, string>> EntityGroupPairs = new HashSet<KeyValuePair<string, string>>();
-    public readonly Dictionary<string, string> GroupNameById = new Dictionary<string, string>();
 
     public static EntityKey EntityKeyMaker(string entityId)
     {
@@ -59,7 +64,6 @@ public class GuildTestController : MonoBehaviourPun
         PlayFabAdminAPI.GetPlayersInSegment(req, result =>
         {
             listOfPlayers = result.PlayerProfiles;
-            resultList.Clear();
             foreach (PlayFab.AdminModels.PlayerProfile profile in listOfPlayers)
             {
                 if (!string.IsNullOrEmpty(profile.DisplayName))
@@ -93,10 +97,6 @@ public class GuildTestController : MonoBehaviourPun
         {
             if (r.Data != null && r.Data.ContainsKey("entityID") && r.Data.ContainsKey("entityType"))
             {
-                //Debug.Log(r.Data["entityID"].Value);
-                //Debug.Log(r.Data["entityType"].Value);
-
-                // Do something with entityID and entityType
                 var request = new ListMembershipRequest
                 {
                     Entity = new EntityKey { Id = r.Data["entityID"].Value, Type = r.Data["entityType"].Value }
@@ -104,7 +104,6 @@ public class GuildTestController : MonoBehaviourPun
                 PlayFabGroupsAPI.ListMembership(request, OnListGroups, OnSharedError);
             }
         }
-        StartCoroutine(ListGuilds());
 
     }
     private void OnListGroups(ListMembershipResponse response)
@@ -112,26 +111,23 @@ public class GuildTestController : MonoBehaviourPun
         var prevRequest = (ListMembershipRequest)response.Request;
         Debug.Log("Finding Guild List");
 
-        guildInfos.Clear();
-
         foreach (var pair in response.Groups)
         {
             Debug.Log("Guild Found");
 
-            GroupNameById[pair.Group.Id] = pair.GroupName;
-            
-            EntityGroupPairs.Add(new KeyValuePair<string, string>(prevRequest.Entity.Id, pair.Group.Id));
-
             GuildInfo newInfo = new(pair.Group, pair.GroupName); 
-            guildInfos.Add(newInfo);
+
+            if (!guildInfos.Contains(newInfo))
+                guildInfos.Add(newInfo);
 
         }
+
+        ListGuilds();
     }
 
-    public IEnumerator ListGuilds()
+    public void ListGuilds()
     {
-        yield return new WaitForSeconds(1f); 
-
+        //Removes Guild on the list
         foreach (Transform child in guild_content.transform)
         {
             Destroy(child.gameObject);
@@ -154,7 +150,7 @@ public class GuildTestController : MonoBehaviourPun
 
     public void CreateGroup()
     {
-    //string groupName, EntityKey entityKey
+        //string groupName, EntityKey entityKey
         Debug.Log("Creating Guild");
         Debug.Log(guildCreatePanel.transform.Find("GuildNameInput").GetComponent<TMP_InputField>().text);
         // A player-controlled entity creates a new group
@@ -173,13 +169,17 @@ public class GuildTestController : MonoBehaviourPun
         };
         PlayFabClientAPI.UpdateUserData(req, result => 
         { 
-            Debug.Log("Updated Guild Leader"); 
+            Debug.Log("Updated Guild Leader");
+            guildCreatePanel.SetActive(false);
         }
         , error => { Debug.Log("Failed to update guild leader"); });
 
         var prevRequest = (CreateGroupRequest)response.Request;
-        EntityGroupPairs.Add(new KeyValuePair<string, string>(prevRequest.Entity.Id, response.Group.Id));
-        GroupNameById[response.Group.Id] = response.GroupName;
+    }
+
+    public void CloseCreatePanel()
+    {
+        guildCreatePanel.SetActive(false);
     }
     public void DeleteGroup(string groupId)
     {
@@ -191,13 +191,6 @@ public class GuildTestController : MonoBehaviourPun
     {
         var prevRequest = (DeleteGroupRequest)response.Request;
         Debug.Log("Group Deleted: " + prevRequest.Group.Id);
-
-        var temp = new HashSet<KeyValuePair<string, string>>();
-        foreach (var each in EntityGroupPairs)
-            if (each.Value != prevRequest.Group.Id)
-                temp.Add(each);
-        EntityGroupPairs.IntersectWith(temp);
-        GroupNameById.Remove(prevRequest.Group.Id);
     }
 
     public void ApplyToGroup(string groupId)
@@ -229,9 +222,9 @@ public class GuildTestController : MonoBehaviourPun
         var prevRequest= (RemoveMembersRequest)response.Request;
             
         Debug.Log("Entity kicked from Group: " + prevRequest.Members[0].Id + " to " + prevRequest.Group.Id);
-        EntityGroupPairs.Remove(new KeyValuePair<string, string>(prevRequest.Members[0].Id, prevRequest.Group.Id));
     }
- 
+
+
 
     public void OpenGuildCreatePanel()
     {
@@ -241,48 +234,93 @@ public class GuildTestController : MonoBehaviourPun
     {
         //guildCreatePanel.SetActive(false);
         guild_info_panel.SetActive(false);
+        guildInfos.Clear();
+        resultList.Clear();
     }
 
     public void OpenGuildInfo(string groupName, EntityKey group)
     {
-        foreach(Transform child in guild_info_content.transform)
+        foreach (Transform child in guild_info_content.transform)
         {
-            Destroy(child);
+            Destroy(child.gameObject);
         }
+
+        guild_info_panel.transform.Find("Button_GuildApply").gameObject.SetActive(true);
 
         int memberCount = 0;
         var req = new ListGroupMembersRequest() { Group = group };
-        PlayFabGroupsAPI.ListGroupMembers(req, 
+        PlayFabGroupsAPI.ListGroupMembers(req,
             result => {
-               
+
                 foreach (var entities in result.Members)
                 {
                     var temp = entities.Members;
 
                     foreach (var individualMember in temp)
                     {
-                        GameObject memberLabel = Instantiate(guild_member_prefab, guild_info_content.transform);
-                        memberLabel.GetComponent<TMP_Text>().text = individualMember.Key.Id;
-                        //Debug.Log(individualMember.Key.Id);
-                        memberCount++;
+                        string memberId = individualMember.Key.Id;
+
+                        // Fetch entity data for the member
+                        var getObjectsRequest = new PlayFab.DataModels.GetObjectsRequest()
+                        {
+                            Entity = new PlayFab.DataModels.EntityKey
+                            {
+                                Id = memberId,
+                                Type = "title_player_account"  // Assuming player entities are of type "title_player_account"
+                            }
+                        };
+
+                        PlayFabDataAPI.GetObjects(getObjectsRequest,
+                            getObjectResult =>
+                            {
+                                // Check if the display name is present in the response
+                                if (getObjectResult.Objects.TryGetValue("entity_info", out var entityInfo))
+                                {
+                                    EntityInfo temp = JsonUtility.FromJson<EntityInfo>(entityInfo.DataObject.ToString());
+                                    string displayName = temp.displayName;
+                                    GameObject memberLabel = Instantiate(guild_member_prefab, guild_info_content.transform);
+                                    memberLabel.GetComponent<TMP_Text>().text = displayName;
+                                    memberCount++;
+
+                                    if (displayName == DataCarrier.Instance.displayName)
+                                    {
+                                        guild_info_panel.transform.Find("Button_GuildApply").gameObject.SetActive(false);
+                                    }
+                                }
+                                else
+                                {
+                                    Debug.Log("Display name not found for player: " + memberId);
+                                }
+
+                                // Update member count and UI after processing all members
+                                guild_info_panel.transform.Find("Guild_NoOfMembers").GetComponent<TMP_Text>().text = "Members: " + memberCount;
+                            },
+                            getObjectError =>
+                            {
+                                Debug.Log(getObjectError.GenerateErrorReport());
+                            });
                     }
                 }
-                guild_info_panel.transform.Find("Guild_NoOfMembers").GetComponent<TMP_Text>().text = "Members: " + memberCount;
 
-            }, 
+
+                guild_info_panel.SetActive(true);
+            },
             e => {
                 Debug.Log(e.GenerateErrorReport());
             });
 
         guild_info_panel.transform.Find("GuildName_Label").GetComponent<TMP_Text>().text = groupName;
         guild_info_panel.transform.Find("Button_GuildApply").GetComponent<Button>().onClick.AddListener(() => { ApplyToGroup(group.Id); });
-        guild_info_panel.SetActive(true);
+       
     }
+
 
     public void OpenPersonalGuildInfo()
     {
         int memberCount = 0;
         var request = new ListMembershipRequest();
+        bool isAdmin = false;
+
         PlayFabGroupsAPI.ListMembership(request,
             r => {
 
@@ -293,24 +331,105 @@ public class GuildTestController : MonoBehaviourPun
                     var req = new ListGroupMembersRequest() { Group = group.Group };
                     PlayFabGroupsAPI.ListGroupMembers(req, result =>
                     {
+                        
                         foreach (var entities in result.Members)
                         {
                             var temp = entities.Members;
-
-                            foreach (var individual in temp)
+                            string memberRole = entities.RoleName;
+                            
+                            foreach (EntityWithLineage individual in temp)
                             {
-                                GameObject memberLabel = Instantiate(guild_personal_prefab, guild_personal_content.transform);
-                                memberLabel.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = individual.Key.Id;
-                                memberCount++;
-                                memberLabel.transform.Find("RankText").GetComponent<TMP_Text>().text = memberCount.ToString();
+
+                                string memberId = individual.Key.Id;
+                                string memberType = individual.Key.Type;
+
+                                if (DataCarrier.Instance.entityID == memberId && memberRole == "Administrators")
+                                    isAdmin = true;
+
+                                // Fetch entity data for the member
+                                var getObjectsRequest = new PlayFab.DataModels.GetObjectsRequest()
+                                {
+                                    Entity = new PlayFab.DataModels.EntityKey
+                                    {
+                                        Id = memberId,
+                                        Type = memberType  
+                                    }
+                                };
+                                
+                                PlayFabDataAPI.GetObjects(getObjectsRequest,
+                                getObjectResult =>
+                                {
+                                    if (getObjectResult.Objects.TryGetValue("entity_info", out var entityInfo))
+                                    {
+                                        EntityInfo temp = JsonUtility.FromJson<EntityInfo>(entityInfo.DataObject.ToString());
+                                        string displayName = temp.displayName;
+
+                                        GameObject memberLabel = Instantiate(guild_personal_prefab, guild_personal_content.transform);
+                                        memberLabel.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = displayName;
+
+                                        memberCount++;
+                                        memberLabel.transform.Find("RankText").GetComponent<TMP_Text>().text = memberCount.ToString();
+
+                                        if (displayName == DataCarrier.Instance.displayName)
+                                        {
+                                            guild_personal_panel.transform.Find("LeaveGuild_Button").gameObject.SetActive(true);
+                                            guild_personal_panel.transform.Find("LeaveGuild_Button").GetComponent<Button>().onClick.RemoveAllListeners();
+                                            guild_personal_panel.transform.Find("LeaveGuild_Button").GetComponent<Button>().onClick.AddListener(
+                                                () => {
+                                                    KickMember(group.Group.Id, new() { Id = memberId, Type = memberType });
+                                                    CloseGuildMemberInfo();
+                                                    ClosePersonalGuildInfo();
+                                                });
+
+                                        }
+
+                                        memberLabel.GetComponent<Button>().onClick.AddListener(
+                                            () =>
+                                            {
+                                                //Means you're an admin
+                                                if (isAdmin && displayName != DataCarrier.Instance.displayName)
+                                                {
+                                                    guild_member_panel.transform.Find("KickMember").gameObject.SetActive(true);
+                                                    guild_member_panel.transform.Find("KickMember").GetComponent<Button>().onClick.AddListener(
+                                                        () => {
+                                                            KickMember(group.Group.Id, new() { Id = memberId, Type = memberType });
+                                                            CloseGuildMemberInfo();
+                                                            ClosePersonalGuildInfo();
+                                                        });
+                                                }
+                                                else
+                                                {
+                                                    guild_member_panel.transform.Find("KickMember").gameObject.SetActive(false);
+                                                }
+
+                                                guild_member_panel.transform.Find("MemberNameValue_Text").GetComponent<TMP_Text>().text = displayName;
+                                                guild_member_panel.transform.Find("MemberRoleValue_Text").GetComponent<TMP_Text>().text = memberRole;
+                                                guild_member_panel.SetActive(true);
+                                            });
+                                    }
+                                    else
+                                    {
+                                        Debug.Log("Display name not found for player: " + memberId);
+                                    }
+
+                                    // Update member count and UI after processing all members
+                                    guild_personal_panel.transform.Find("MembersCount").GetComponent<TMP_Text>().text = "Members: " + memberCount;
+
+                                },
+                                getObjectError =>
+                                {
+                                    Debug.Log(getObjectError.GenerateErrorReport());
+                                });        
                             }
                         }
-                        guild_personal_panel.transform.Find("MembersCount").GetComponent<TMP_Text>().text = "Members: " + memberCount;
 
                     }, error => { Debug.Log(error); });
                 }
             },
-            e => { Debug.Log(e); });
+            e => {
+                guild_member_panel.transform.Find("LeaveGuild_Button").gameObject.SetActive(false);
+                Debug.Log(e); 
+            });
 
         guild_personal_panel.SetActive(true);
     }
@@ -322,6 +441,14 @@ public class GuildTestController : MonoBehaviourPun
         }
 
         guild_personal_panel.SetActive(false);
+    }
+    public void CloseGuildMemberInfo()
+    {
+        guild_member_panel.SetActive(false);
+    }
+    public void UpdateGroup()
+    {
+        //PlayFab.ClientModels.UpdateSharedGroupDataRequest req = new () { }
     }
 
     
