@@ -9,6 +9,11 @@ using UnityEngine.UI;
 
 public class NotificationManager : MonoBehaviour
 {
+    class EntityInfo
+    {
+        public string displayName;
+    }
+
     [SerializeField] GameObject friendPendingPrefab, guildPendingPrefab;
     [SerializeField] RectTransform _pending_context;
     [SerializeField] GameObject pendingPanel;
@@ -100,16 +105,45 @@ public class NotificationManager : MonoBehaviour
         foreach(var guildApplication in _pendingGuild)
         {
             string applicantName = guildApplication.Entity.Key.Id;
+            // Fetch entity data for the member
+            var getObjectsRequest = new PlayFab.DataModels.GetObjectsRequest()
+            {
+                Entity = new PlayFab.DataModels.EntityKey
+                {
+                    Id = applicantName,
+                    Type = "title_player_account"
+                }
+            };
 
-            GameObject guildListPendingPrefab = Instantiate(guildPendingPrefab, _pending_context);
-            guildListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = applicantName + "(G)";
-            guildListPendingPrefab.transform.Find("AcceptGuildRequest").GetComponent<Button>().
-                onClick.AddListener(() => {
-                    guildTestController.AcceptApplication(guildApplication.Group, guildApplication.Entity.Key);
-                    _pendingGuild.Remove(guildApplication);
-                    Destroy(guildListPendingPrefab);
+            PlayFabDataAPI.GetObjects(getObjectsRequest,
+                getObjectResult =>
+                {
+                    // Check if the display name is present in the response
+                    if (getObjectResult.Objects.TryGetValue("entity_info", out var entityInfo))
+                    {
+                        EntityInfo temp = JsonUtility.FromJson<EntityInfo>(entityInfo.DataObject.ToString());
+                        string displayName = temp.displayName;
+
+                        GameObject guildListPendingPrefab = Instantiate(guildPendingPrefab, _pending_context);
+                        guildListPendingPrefab.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = displayName + "(G)";
+                        guildListPendingPrefab.transform.Find("AcceptGuildRequest").GetComponent<Button>().
+                            onClick.AddListener(() => {
+                                guildTestController.AcceptApplication(guildApplication.Group, guildApplication.Entity.Key);
+                                _pendingGuild.Remove(guildApplication);
+                                Destroy(guildListPendingPrefab);
+                            });
+                        guildListPendingPrefab.transform.Find("DeclineGuildRequest").GetComponent<Button>().
+                        onClick.AddListener(() => {
+                            guildTestController.DeclineApplication(guildApplication.Group, guildApplication.Entity.Key);
+                            _pendingGuild.Remove(guildApplication);
+                            Destroy(guildListPendingPrefab);
+                        });
+                    }
+                },
+                getObjectError =>
+                {
+                    Debug.Log(getObjectError);
                 });
-            guildListPendingPrefab.transform.Find("DeclineGuildRequest").GetComponent<Button>().onClick.AddListener(() => { });
 
         }
 

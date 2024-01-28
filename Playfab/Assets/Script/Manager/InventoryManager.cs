@@ -132,7 +132,7 @@ public class InventoryManager : MonoBehaviour
             Image itemImage = shopItem.transform.Find("ItemImage").GetComponent<Image>();
 
             itemText.text = Items[i].itemName;
-            costText.text = Items[i].price.ToString();
+            costText.text = (Items[i].price - Items[i].price * DataCarrier.Instance.guildStats.discountBonus / 100.0f).ToString();
             itemImage.sprite = itemArray[i];
 
             shopItem.GetComponent<Button>().onClick.AddListener(() => {

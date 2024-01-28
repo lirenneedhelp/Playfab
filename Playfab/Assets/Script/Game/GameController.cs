@@ -116,6 +116,7 @@ public class GameController : MonoBehaviour
         {
             //PFDataMgr.SetUserData((int)LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.level);
             PFDataMgr.UpdateDataJSON(LevelSystem.Instance.level, (int)LevelSystem.Instance.maxLevel, LevelSystem.Instance.currentXp, LevelSystem.Instance.nextLevelXp, LevelSystem.Instance.skillPoints);
+            GuildTestController.UpdateGroup(DataCarrier.Instance.group);
         }
         SceneManager.LoadScene("Landing");
     }
@@ -130,6 +131,7 @@ public class GameController : MonoBehaviour
         finalHighScoreText.text = highestScore.ToString();
 
         LevelSystem.Instance.GainExperienceFlatRate(score * 0.1f);
+        GuildLevelSystem.GainExperienceFlatRate(score * 0.01f);
 
         if (!DataCarrier.Instance.isGuest)
             PFDataMgr.AddPlayerScore(int.Parse(finalScoreText.text));

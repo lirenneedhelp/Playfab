@@ -247,7 +247,7 @@ public class PlayFabUserMgt : MonoBehaviour
 
             PlayFabDataAPI.SetObjects(setEData, 
                 result => {
-                    Debug.Log(result.SetResults[0]);
+                    //Debug.Log(result.SetResults[0]);
                     SceneManager.LoadScene(1);
                 }, 
                 e => {

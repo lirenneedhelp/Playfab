@@ -150,6 +150,7 @@ public class GuildTestController : MonoBehaviourPun
 
     public void CreateGroup()
     {
+       
         //string groupName, EntityKey entityKey
         Debug.Log("Creating Guild");
         Debug.Log(guildCreatePanel.transform.Find("GuildNameInput").GetComponent<TMP_InputField>().text);
@@ -160,12 +161,153 @@ public class GuildTestController : MonoBehaviourPun
     private void OnCreateGroup(CreateGroupResponse response)
     {
         Debug.Log("Group Created: " + response.GroupName + " - " + response.Group.Id);
+        DataCarrier.Instance.guildStats.currentLevel++;
+        DataCarrier.Instance.guildStats.discountBonus++;
+        GuildLevelSystem.Instance.CalculateNextLevelXp();
+
+
+        // Create the policy statements as per your requirements
+        List<PlayFab.ProfilesModels.EntityPermissionStatement> statements = new List<PlayFab.ProfilesModels.EntityPermissionStatement>
+        {
+            // Policy 1
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "Read",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*",
+                Principal = "*",
+                Comment = "Allow all entities to read the group's metadata, such as name"
+            },
+
+            // Policy 2
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "*",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*",
+                Principal = new Dictionary<string, object>
+                {
+                    { "MemberOf", new Dictionary<string, object> { { "RoleId", "admins" } } }
+                },
+                Comment = "Allow members of the group administrator role to modify the group metadata"
+            },
+
+            // Policy 3
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "Read",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:data--*!*/Profile/*",
+                Principal = "*",
+                Comment = "Allow members of the group to read entity profile data and files"
+            },
+
+            // Policy 4
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "*",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:data--*!*/*",
+                Principal = new Dictionary<string, object>
+                {
+                    { "MemberOf", new Dictionary<string, object> { { "RoleId", "admins" } } }
+                },
+                Comment = "Allow members of the group administrator role to modify group profile data and files"
+            },
+
+            // Policy 5
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "*",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*/*",
+                Principal = new Dictionary<string, object>
+                {
+                    { "MemberOf", new Dictionary<string, object> { { "RoleId", "admins" } } }
+                },
+                Comment = "Allow members of the group administrator role to do anything with the group"
+            },
+
+            // Policy 6
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "Read",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*/Members/*",
+                Principal = new Dictionary<string, object>
+                {
+                    { "ChildOf", new Dictionary<string, object> { { "EntityType", "title" }, { "EntityId", "6789D" } } }
+                },
+                Comment = "Allow members of the group to view members of the group"
+            },
+
+            // Policy 7
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "Read",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*/Roles/*",
+                Principal = new Dictionary<string, object>
+                {
+                    { "ChildOf", new Dictionary<string, object> { { "EntityType", "title" }, { "EntityId", "6789D" } } }
+                },
+                Comment = "Allow all entities of the title to read all roles in the group"
+            },
+
+            // Policy 8
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "Create",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*/Applications/*",
+                Principal = new Dictionary<string, object>
+                {
+                    { "ChildOf", new Dictionary<string, object> { { "EntityType", "title" }, { "EntityId", "6789D" } } }
+                },
+                Comment = "Allow all entities to apply to join the group"
+            },
+
+            // Policy 9
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "RemoveMember",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*/Members/[SELF]",
+                Principal = new Dictionary<string, object>
+                {
+                    { "ChildOf", new Dictionary<string, object> { { "EntityType", "title" }, { "EntityId", "6789D" } } }
+                },
+                Comment = "Allow entities to leave the group"
+            },
+
+            // Policy 10
+            new PlayFab.ProfilesModels.EntityPermissionStatement
+            {
+                Action = "RemoveMember",
+                Effect = PlayFab.ProfilesModels.EffectType.Allow,
+                Resource = "pfrn:group--*!*/Roles/*/Members/[SELF]",
+                Principal = new Dictionary<string, object>
+                {
+                    { "ChildOf", new Dictionary<string, object> { { "EntityType", "title" }, { "EntityId", "6789D" } } }
+                },
+                Comment = "Allow entities to leave any role that they are in"
+            }
+        };
+
+   
+        var setPolicy = new PlayFab.ProfilesModels.SetEntityProfilePolicyRequest() { Entity = new() { Id = response.Group.Id, Type = response.Group.Type }, Statements = statements };
+        PlayFabProfilesAPI.SetProfilePolicy(setPolicy, r => {
+            Debug.Log("Policy Set");
+            UpdateGroup(response.Group);
+        }, e => { Debug.Log(e); });
+
         var req = new PlayFab.ClientModels.UpdateUserDataRequest()
         {
             Data = new Dictionary<string, string> {
-                { "entityID", DataCarrier.Instance.entityID },
+                { "entityID", DataCarrier.Instance.entityID},
                 { "entityType", DataCarrier.Instance.entityType }
-            }
+            },
+            Permission = PlayFab.ClientModels.UserDataPermission.Public
         };
         PlayFabClientAPI.UpdateUserData(req, result => 
         { 
@@ -212,15 +354,31 @@ public class GuildTestController : MonoBehaviourPun
         notificationManager.Update_NotificationCount();
         Debug.Log("Entity Added to Group: " + prevRequest.Entity.Id + " to " + prevRequest.Group.Id);
     }
+    public void DeclineApplication(EntityKey group, EntityKey playerEntity)
+    {
+        var req = new RemoveGroupApplicationRequest() { Group = group, Entity = playerEntity };
+        PlayFabGroupsAPI.RemoveGroupApplication(req, result => { Debug.Log("Declined Application"); }, e => { Debug.Log(e); });
+    }
     public void KickMember(string groupId, EntityKey entityKey)
     {
         var request = new RemoveMembersRequest { Group = EntityKeyMaker(groupId), Members = new List<EntityKey> { entityKey } };
         PlayFabGroupsAPI.RemoveMembers(request, OnKickMembers, OnSharedError);
     }
+    public void KickMember(string groupId, EntityKey entityKey, string role)
+    {
+        var request = new RemoveMembersRequest { Group = EntityKeyMaker(groupId), Members = new List<EntityKey> { entityKey } };
+        PlayFabGroupsAPI.RemoveMembers(request, result=> { 
+            if (role == "Administrators")
+            {
+                var destroyReq = new DeleteGroupRequest() { Group = EntityKeyMaker(groupId) };
+                PlayFabGroupsAPI.DeleteGroup(destroyReq, r => { Debug.Log("Destroyed Group Successfully"); }, e => { Debug.Log(e); });
+            }
+        }, OnSharedError);
+    }
     private void OnKickMembers(EmptyResponse response)
     {
         var prevRequest= (RemoveMembersRequest)response.Request;
-            
+           
         Debug.Log("Entity kicked from Group: " + prevRequest.Members[0].Id + " to " + prevRequest.Group.Id);
     }
 
@@ -282,7 +440,7 @@ public class GuildTestController : MonoBehaviourPun
                                     memberLabel.GetComponent<TMP_Text>().text = displayName;
                                     memberCount++;
 
-                                    if (displayName == DataCarrier.Instance.displayName)
+                                    if (displayName == DataCarrier.Instance.displayName || DataCarrier.Instance.inGuild)
                                     {
                                         guild_info_panel.transform.Find("Button_GuildApply").gameObject.SetActive(false);
                                     }
@@ -327,6 +485,10 @@ public class GuildTestController : MonoBehaviourPun
                 foreach (var group in r.Groups)
                 {
                     guild_personal_panel.transform.Find("GuildName_Label").GetComponent<TMP_Text>().text = group.GroupName;
+                    guild_personal_panel.transform.Find("GuildLevel").GetComponent<TMP_Text>().text = "Level: " + DataCarrier.Instance.guildStats.currentLevel.ToString();
+                    guild_personal_panel.transform.Find("GuildExp").GetComponent<TMP_Text>().text = "EXP: " + DataCarrier.Instance.guildStats.currentExp.ToString() + " / " + DataCarrier.Instance.guildStats.expToLevelUp;
+
+                    UpdateGroup(group.Group);
 
                     var req = new ListGroupMembersRequest() { Group = group.Group };
                     PlayFabGroupsAPI.ListGroupMembers(req, result =>
@@ -446,9 +608,22 @@ public class GuildTestController : MonoBehaviourPun
     {
         guild_member_panel.SetActive(false);
     }
-    public void UpdateGroup()
+    public static void UpdateGroup(EntityKey groupId)
     {
-        //PlayFab.ClientModels.UpdateSharedGroupDataRequest req = new () { }
+        PlayFab.DataModels.SetObjectsRequest setGuildStats = new PlayFab.DataModels.SetObjectsRequest()
+        {
+            Entity = new() { Id = groupId.Id, Type = groupId.Type },
+            Objects = new List<PlayFab.DataModels.SetObject>
+                {
+                    new PlayFab.DataModels.SetObject
+                    {
+                        ObjectName = "guild_info", 
+                        DataObject = DataCarrier.Instance.guildStats
+                    }
+                }
+        };
+
+        PlayFabDataAPI.SetObjects(setGuildStats, r => { Debug.Log("Updated guild stats"); }, e => { Debug.Log(e.GenerateErrorReport()); });
     }
 
     
