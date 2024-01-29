@@ -76,7 +76,9 @@ public class NotificationManager : MonoBehaviour
                         Update_NotificationCount();
                     }
 
-            }, e=> { Debug.Log(e.GenerateErrorReport()); });
+            }, e=> { 
+               // Debug.Log(e.GenerateErrorReport()); 
+            });
             }, error => { Debug.Log(error.GenerateErrorReport()); });
 
        

@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Coin : MonoBehaviour
+public class Coin : MonoBehaviourPun
 {
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -13,6 +13,7 @@ public class Coin : MonoBehaviour
         {
             // Add Coins
             AddMoney();
+            photonView.TransferOwnership(PhotonNetwork.MasterClient);
             PhotonNetwork.Destroy(gameObject);
         }
     }

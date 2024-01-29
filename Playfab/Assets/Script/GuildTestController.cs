@@ -97,6 +97,7 @@ public class GuildTestController : MonoBehaviourPun
         {
             if (r.Data != null && r.Data.ContainsKey("entityID") && r.Data.ContainsKey("entityType"))
             {
+                Debug.Log(r.Data["entityID"].Value);
                 var request = new ListMembershipRequest
                 {
                     Entity = new EntityKey { Id = r.Data["entityID"].Value, Type = r.Data["entityType"].Value }
@@ -114,7 +115,7 @@ public class GuildTestController : MonoBehaviourPun
         foreach (var pair in response.Groups)
         {
             Debug.Log("Guild Found");
-
+            Debug.Log(pair.Group.Id);
             GuildInfo newInfo = new(pair.Group, pair.GroupName); 
 
             if (!guildInfos.Contains(newInfo))
@@ -132,7 +133,7 @@ public class GuildTestController : MonoBehaviourPun
         {
             Destroy(child.gameObject);
         }
-
+        Debug.Log(guildInfos.Count);
         foreach (var pair in guildInfos)
         {
             GameObject newGuildContent = Instantiate(guild_content_prefab, guild_content.transform);
@@ -291,7 +292,9 @@ public class GuildTestController : MonoBehaviourPun
                     { "ChildOf", new Dictionary<string, object> { { "EntityType", "title" }, { "EntityId", "6789D" } } }
                 },
                 Comment = "Allow entities to leave any role that they are in"
-            }
+            },
+            
+        
         };
 
    
@@ -326,7 +329,7 @@ public class GuildTestController : MonoBehaviourPun
     public void DeleteGroup(string groupId)
     {
         // A title, or player-controlled entity with authority to do so, decides to destroy an existing group
-        var request = new DeleteGroupRequest { Group = EntityKeyMaker(groupId) };
+        var request = new DeleteGroupRequest { Group = EntityKeyMaker(groupId) , AuthenticationContext = DataCarrier.Instance.auth };
         PlayFabGroupsAPI.DeleteGroup(request, OnDeleteGroup, OnSharedError);
     }
     private void OnDeleteGroup(EmptyResponse response)
@@ -381,7 +384,6 @@ public class GuildTestController : MonoBehaviourPun
            
         Debug.Log("Entity kicked from Group: " + prevRequest.Members[0].Id + " to " + prevRequest.Group.Id);
     }
-
 
 
     public void OpenGuildCreatePanel()
@@ -538,7 +540,7 @@ public class GuildTestController : MonoBehaviourPun
                                             guild_personal_panel.transform.Find("LeaveGuild_Button").GetComponent<Button>().onClick.RemoveAllListeners();
                                             guild_personal_panel.transform.Find("LeaveGuild_Button").GetComponent<Button>().onClick.AddListener(
                                                 () => {
-                                                    KickMember(group.Group.Id, new() { Id = memberId, Type = memberType });
+                                                    KickMember(group.Group.Id, new() { Id = memberId, Type = memberType }, memberRole);
                                                     CloseGuildMemberInfo();
                                                     ClosePersonalGuildInfo();
                                                 });

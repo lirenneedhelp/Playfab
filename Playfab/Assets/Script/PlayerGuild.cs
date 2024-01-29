@@ -6,58 +6,115 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
-using System;
 
-public class PlayerGuild : MonoBehaviourPun
+public class PlayerGuild : MonoBehaviourPun,IPunObservable
 {
     [SerializeField]
     GameObject guild_invite_panel;
 
-    string groupName = "";
+    PhotonView pv;
+
+    public string groupName = "";
 
     string groupId = "";
 
 
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            // If you are the owner, send the value to the network
+            stream.SendNext(groupName);
+            stream.SendNext(groupId);
+        }
+        else
+        {
+            // If you are not the owner, receive the value from the network
+            groupName = (string)stream.ReceiveNext();
+            groupId = (string)stream.ReceiveNext();
+        }
+    }
+    private void Awake()
+    {
+        pv = GetComponent<PhotonView>();
+        Debug.LogError("PhotonView");
+    }
     // Start is called before the first frame update
     void Start()
     {
+        if (!pv.IsMine)
+            return;
+
+        DataCarrier.Instance.ViewID = pv.ViewID;
         ListGroups();
     }
     private void ListGroups()
     {
+       // Debug.Log("Acoustic");
         var request = new ListMembershipRequest();
         PlayFabGroupsAPI.ListMembership(request, r=> {
+            //Debug.Log("Scott");
             foreach (var pair in r.Groups) //Groups
             {
                 var req = new ListGroupMembersRequest()
                 {
                     Group = pair.Group,
                 };
-                PlayFabGroupsAPI.ListGroupMembers(req, result => { 
-                foreach (var info in result.Members) // Role
-                {
-                    foreach (var member in info.Members) // People
+                PlayFabGroupsAPI.ListGroupMembers(req, result => {
+                   // Debug.Log("Awesome");
+
+                    foreach (var info in result.Members) // Role
                     {
-                        if (member.Key.Id == DataCarrier.Instance.entityID)
+                        foreach (var member in info.Members) // People
                         {
-                            OnListGroups(pair.Group.Id, pair.Group.Type);
-                            groupName = pair.GroupName;
-                            groupId = pair.Group.Id;
-                            DataCarrier.Instance.inGuild = true;
-                            DataCarrier.Instance.group = pair.Group;
-                            break;
+                            if (member.Key.Id == DataCarrier.Instance.entityID)
+                            {
+                                Debug.Log("You're in");
+                                OnListGroups(pair.Group.Id, pair.Group.Type);
+                                groupName = pair.GroupName;
+                                Debug.Log(groupName);
+                                groupId = pair.Group.Id;
+                                DataCarrier.Instance.inGuild = true;
+                                DataCarrier.Instance.group = pair.Group;
+                                return;
+                            }
                         }
                     }
-                }
-            }
-            , e => {
-                Debug.Log(e);
-            });
 
+                }
+                , e => {
+                    Debug.Log(e);
+              
+                });
             }
+
+            StartCoroutine(WaitForResult());
+
+           
         }, error => { Debug.Log(error.GenerateErrorReport()); });   
     }
+    //private void Update()
+    //{
+    //    if (pv.IsMine)
+    //        Debug.LogError(pv.Owner.NickName);
+    //}
+    private IEnumerator WaitForResult()
+    {
+        yield return new WaitForSeconds(2f);
 
+        if (!DataCarrier.Instance.inGuild)
+        {
+            var deleteplayerkey = new PlayFab.ClientModels.UpdateUserDataRequest()
+            {
+                KeysToRemove = new() { "entityID", "entityType" }
+            };
+            PlayFabClientAPI.UpdateUserData(deleteplayerkey,
+                r =>
+                {
+                    Debug.LogError("Successfully removed your existence");
+                }, e => { });
+        }
+    }
     private void OnListGroups(string groupId, string groupType)
     {
         var getObjectsRequest = new PlayFab.DataModels.GetObjectsRequest()
@@ -84,28 +141,10 @@ public class PlayerGuild : MonoBehaviourPun
         
 
     }
-    public void InviteToGroup(string playerName)
+    public void InviteToGroup(string playerName, string sender, int viewId)
     {
-        //Debug.Log(playerName);
-
-        var guildInfoReq = new GetGroupRequest() { GroupName = groupName };
-        PlayFabGroupsAPI.GetGroup(guildInfoReq,
-            resultGroup => {
-                // A player-controlled entity invites another player-controlled entity to an existing group
-                //Entity Key is the player you want to invite
-                var invitedPlayerReq = new PlayFab.ClientModels.GetAccountInfoRequest() { Username = playerName };
-                PlayFabClientAPI.GetAccountInfo(invitedPlayerReq, result =>
-                {
-                    var request = new InviteToGroupRequest { Group = resultGroup.Group, Entity = new EntityKey() { Id = result.AccountInfo.TitleInfo.TitlePlayerAccount.Id , Type = "title_player_account"} };
-                    PlayFabGroupsAPI.InviteToGroup(request, response =>
-                    {
-                        photonView.RPC(nameof(RPC_SendGuildInvite), Player.FindPlayerByNickname(playerName), groupName);
-                    }, error => { Debug.Log(error.GenerateErrorReport()); }
-                        );
-                }, error => { Debug.LogError(error.GenerateErrorReport()); });
-
-            }, error => { Debug.LogError(error.GenerateErrorReport()); });
-
+        //Debug.LogError(Player.FindPlayerByNickname(sender).NickName);
+        pv.RPC(nameof(RPC_SendGuildInvite), Player.FindPlayerByNickname(sender), playerName, sender, viewId);
     }
 
     public void AcceptGuildInvite(string groupName)
@@ -134,11 +173,40 @@ public class PlayerGuild : MonoBehaviourPun
     }
 
     [PunRPC]
-    void RPC_SendGuildInvite(string groupName)
+    void RPC_SendGuildInvite(string playerName, string sender, int viewID)
     {
-        OpenGuildInvite(groupName);
+        PhotonView refView = PhotonView.Find(viewID);
+        if (refView.Owner.NickName == sender)
+        {
+            GameObject senderGO = refView.gameObject;
+            string senderGroupId = senderGO.GetComponent<PlayerGuild>().groupId;
+            string senderGroupName = senderGO.GetComponent<PlayerGuild>().groupName;
+
+            Debug.Log(refView.Owner.NickName);
+            Debug.LogError(senderGroupName);
+
+            var guildInfoReq = new GetGroupRequest() { GroupName = senderGroupName };
+            PlayFabGroupsAPI.GetGroup(guildInfoReq,
+                resultGroup =>
+                {
+                    // A player-controlled entity invites another player-controlled entity to an existing group
+                    //Entity Key is the player you want to invite
+                    var invitedPlayerReq = new PlayFab.ClientModels.GetAccountInfoRequest() { Username = playerName };
+                    PlayFabClientAPI.GetAccountInfo(invitedPlayerReq, result =>
+                    {
+                        var request = new InviteToGroupRequest { Group = resultGroup.Group, Entity = new EntityKey() { Id = result.AccountInfo.TitleInfo.TitlePlayerAccount.Id, Type = "title_player_account" } };
+                        PlayFabGroupsAPI.InviteToGroup(request, response =>
+                        {
+                            refView.RPC(nameof(OpenGuildInvite), Player.FindPlayerByNickname(playerName), senderGroupName);
+                        }, error => { Debug.Log(error.GenerateErrorReport()); }
+                            );
+                    }, error => { Debug.LogError(error.GenerateErrorReport()); });
+
+                }, error => { Debug.LogError(error.GenerateErrorReport()); });
+        }
     }
 
+    [PunRPC]
     void OpenGuildInvite(string groupName)
     {
         guild_invite_panel.transform.Find("Button_AcceptGuild").GetComponent<Button>().onClick.RemoveAllListeners();
@@ -159,4 +227,5 @@ public class PlayerGuild : MonoBehaviourPun
     {
         guild_invite_panel.SetActive(false);
     }
+
 }

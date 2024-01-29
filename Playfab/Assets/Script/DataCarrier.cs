@@ -25,6 +25,8 @@ public class DataCarrier : MonoBehaviour
     public List<Skill> skills;
     public GuildStats guildStats = new();
     public PlayFab.GroupsModels.EntityKey group;
+    public int ViewID;
+    public PlayFab.PlayFabAuthenticationContext auth;
     
     // Start is called before the first frame update
     void Awake()

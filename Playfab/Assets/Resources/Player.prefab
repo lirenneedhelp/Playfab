@@ -5255,6 +5255,7 @@ MonoBehaviour:
   - {fileID: 8875753840370992056}
   - {fileID: -3052959146319405436}
   - {fileID: 1793753063800070365}
+  - {fileID: 5068790843632363480}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -5310,6 +5311,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   guild_invite_panel: {fileID: 1656890645526920874}
+  groupName: 
 --- !u!1001 &2938747374491932553
 PrefabInstance:
   m_ObjectHideFlags: 0

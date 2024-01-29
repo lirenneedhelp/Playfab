@@ -218,6 +218,7 @@ public class PlayFabUserMgt : MonoBehaviour
        DataCarrier.Instance.sessionTicket = r.SessionTicket;
        DataCarrier.Instance.entityID = r.EntityToken.Entity.Id;
        DataCarrier.Instance.entityType = r.EntityToken.Entity.Type;
+        DataCarrier.Instance.auth = r.AuthenticationContext;
        
         PlayFabClientAPI.GetPlayerProfile(new GetPlayerProfileRequest()
         {

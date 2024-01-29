@@ -53,6 +53,10 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
     private CONTACT_TYPE contactType;
     private TextMeshProUGUI currentText;
 
+    private void Awake()
+    {
+        pv = GetComponent<PhotonView>();
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -70,21 +74,14 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
 
         canMove = true;
         tradeAcceptance = new bool[2] { false, false };
+        eButton.SetActive(false);
+        inventoryUI.SetActive(true);
 
-        pv = GetComponent<PhotonView>();
-
-
-        if (pv.IsMine)
-        {
-            eButton.SetActive(false);
-            inventoryUI.SetActive(true);
-            //Debug.LogError("HELLO FLECKERS");
-            //photonPlayer = PhotonNetwork.LocalPlayer;
-        }
-        else
-        {
-            inventoryUI.SetActive(false);
-        }
+        if (!pv.IsMine)
+            return;
+       
+        inventoryUI.SetActive(false);
+        
     }
 
     // Update is called once per frame
@@ -261,7 +258,10 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         string PlayerName = result;
         photonPlayer = FindPlayerByNickname(PlayerName);
         otherPlayerInfo.transform.Find("Display").GetComponent<TMP_Text>().text = player_NameTag.text;
-        otherPlayerInfo.transform.Find("InviteToGuild").GetComponent<Button>().onClick.AddListener(() => { playerGuild.InviteToGroup(PlayerName); });
+        if (!pv.IsMine)
+        {
+            otherPlayerInfo.transform.Find("InviteToGuild").GetComponent<Button>().onClick.AddListener(() => { playerGuild.InviteToGroup(PlayerName, DataCarrier.Instance.displayName, DataCarrier.Instance.ViewID); });
+        }
         otherPlayerInfo.SetActive(true);
 
     }
@@ -332,6 +332,7 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         }
 
     }
+
 
 
     #region RPC_FUNCTION
