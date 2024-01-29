@@ -78,9 +78,9 @@ public class Player : MonoBehaviourPunCallbacks, IPunObservable
         inventoryUI.SetActive(true);
 
         if (!pv.IsMine)
-            return;
+            inventoryUI.SetActive(false);
+
        
-        inventoryUI.SetActive(false);
         
     }
 
