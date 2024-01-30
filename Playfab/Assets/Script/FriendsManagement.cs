@@ -139,12 +139,11 @@ public class FriendsManagement : MonoBehaviour
             //AddFriend(FriendIdType.Username, friendDisplay);
             ExecuteCloudScriptRequest request = new()
             {
-                FunctionName = "SendFriendRequest", // CloudScript function name
+                FunctionName = "SendFriendRequest", 
                 FunctionParameter = new
                 {
                     mainPlayFabId = DataCarrier.Instance.playfabID,
                     friendPlayFabId = friendId
-                    // other parameters if required by your CloudScript function
                 }
             };
 

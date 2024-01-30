@@ -48,27 +48,7 @@ public class TradeManager : MonoBehaviour
         
        
     }
-    public string CheckForTrades()
-    {
-        string tradeID = "";
-        PlayFabClientAPI.GetPlayerTrades(new GetPlayerTradesRequest
-        {
-            StatusFilter = TradeStatus.Open
-        }, r => {
-            foreach (TradeInfo tradeInfo in r.AcceptedTrades)
-            {
-                Debug.Log(tradeInfo.TradeId);
-                
-            }
-            tradeID = r.AcceptedTrades[0].TradeId;
-        }, e => {
-            Debug.Log(e.GenerateErrorReport());
-        });
-        Debug.LogError(tradeID);
-
-        return tradeID;
-    }
-
+   
     public void AcceptGiftFrom(string playerName, string tradeId)
     {
         PlayFabClientAPI.GetAccountInfo(new()
@@ -103,14 +83,6 @@ public class TradeManager : MonoBehaviour
 
 
     }
-
-
-    IEnumerator ProcessTradeCall(string playFabId, string tradeId)
-    {
-        yield return new WaitForSeconds(5f);
-        AcceptGiftFrom(playFabId, tradeId);
-    }
-
 
 
 }
