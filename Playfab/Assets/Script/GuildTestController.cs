@@ -7,6 +7,7 @@ using TMPro;
 using Photon.Pun;
 using UnityEngine.UI;
 using System;
+using Newtonsoft.Json;
 
 public class GuildTestController : MonoBehaviourPun
 {

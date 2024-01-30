@@ -154,6 +154,27 @@ public class PlayerGuild : MonoBehaviourPun,IPunObservable
             result => {
                 var request = new AcceptGroupInvitationRequest { Group = result.Group };
                 PlayFabGroupsAPI.AcceptGroupInvitation(request, response=> {
+                    var getObjectsRequest = new PlayFab.DataModels.GetObjectsRequest()
+                    {
+                        Entity = new PlayFab.DataModels.EntityKey
+                        {
+                            Id = result.Group.Id,
+                            Type = result.Group.Type
+                        }
+                    };
+                    PlayFabDataAPI.GetObjects(getObjectsRequest,
+                    getObjectResult =>
+                    {
+                        if (getObjectResult.Objects.TryGetValue("guild_info", out var entityInfo))
+                        {
+                            DataCarrier.Instance.guildStats = JsonConvert.DeserializeObject<DataCarrier.GuildStats>(entityInfo.DataObject.ToString());
+                            Debug.Log(DataCarrier.Instance.guildStats.currentLevel);
+                        }
+                    },
+                    error =>
+                    {
+                        Debug.Log(error);
+                    });
                     CloseGuildInvite();
                 }, error => { Debug.LogError(error.GenerateErrorReport()); });
             }, error => { Debug.LogError(error.GenerateErrorReport()); });
