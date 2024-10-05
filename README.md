@@ -1,0 +1,1 @@
+This project is a 2D side-scrolling game developed in Unity, featuring full PlayFab integration for cloud-based player data management, leaderboards, and authentication. Players can create accounts, log in, and track their scores via the PlayFab platform, allowing for competitive gameplay with global leaderboards.
